@@ -4,7 +4,7 @@ from director import callbacks
 from director.fieldcontainer import FieldContainer
 from director import ik
 from director import ikplanner
-from director import irisdriver
+#from director import irisdriver
 from director import raycastdriver
 from director import objectmodel as om
 from director import perception
@@ -58,7 +58,7 @@ class RobotSystem(object):
         view = view or applogic.getCurrentRenderView()
 
         useRobotState = True
-        usePerception = True
+        usePerception = False
         useFootsteps = True
         useHands = True
         usePlanning = True
@@ -103,7 +103,8 @@ class RobotSystem(object):
                 return (0, 0)
             spindleMonitor = perception.SpindleMonitor(getSpindleAngleFunction)
             robotStateModel.connectModelChanged(spindleMonitor.onRobotStateChanged)
-
+        else:
+            neckDriver = None
 
 
         if useHands:
@@ -113,7 +114,7 @@ class RobotSystem(object):
 
         if useFootsteps:
             footstepsDriver = footstepsdriver.FootstepsDriver(robotStateJointController)
-            irisDriver = irisdriver.IRISDriver(robotStateJointController, footstepsDriver.params)
+            #irisDriver = irisdriver.IRISDriver(robotStateJointController, footstepsDriver.params)
             raycastDriver = raycastdriver.RaycastDriver()
 
         if usePlanning:

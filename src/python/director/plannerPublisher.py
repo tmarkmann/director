@@ -17,6 +17,7 @@ from director.utime import getUtime
 from director import lcmUtils
 
 
+
 class PlannerPublisher(object):
 
   def __init__(self, ikPlanner, affordanceMan):
