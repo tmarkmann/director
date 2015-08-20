@@ -1,3 +1,4 @@
+import os
 import ddapp.visualization as vis
 from ddapp import filterUtils
 import ddapp.vtkAll as vtk
@@ -7,6 +8,9 @@ from ddapp import ioUtils
 import numpy as np
 
 
+skyboxDir = os.path.expanduser('~/Desktop/skybox')
+
+
 def createTexturedPlane():
     source = vtk.vtkPlaneSource()
     textureMap = vtk.vtkTextureMapToPlane()
@@ -14,6 +18,11 @@ def createTexturedPlane():
 
     textureMap.Update()
     return shallowCopy(textureMap.GetOutput())
+
+
+def createTexturedSphere():
+    pd = ioUtils.readPolyData(os.path.join(skyboxDir, 'textured_sphere.vtp'))
+    return pd
 
 
 def getSkyboxSides():
@@ -95,6 +104,17 @@ def createSkybox(imageMap, view):
         objs[side] = obj
 
     return objs
+
+
+def createSkyboxEquirectangular(view):
+    imageFilename = os.path.join(skyboxDir, 'image5.jpg')
+    texture = createTexture(imageFilename)
+
+    obj = vis.PolyDataItem('skybox sphere', createTexturedSphere(), view=None)
+    obj.actor.SetTexture(texture)
+    obj.actor.GetProperty().LightingOff()
+    view.backgroundRenderer().AddActor(obj.actor)
+
 
 
 def getSkyboxImages(baseDir):

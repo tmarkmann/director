@@ -118,13 +118,13 @@ ddQVTKWidgetView::ddQVTKWidgetView(QWidget* parent) : ddViewBase(parent)
   this->Internal->TDxInteractor = vtkSmartPointer<vtkTDxInteractorStyleCallback>::New();
   vtkInteractorStyle::SafeDownCast(this->Internal->RenderWindow->GetInteractor()->GetInteractorStyle())->SetTDxStyle(this->Internal->TDxInteractor);
 
-  //this->Internal->RenderWindow->SetNumberOfLayers(2);
+  this->Internal->RenderWindow->SetNumberOfLayers(2);
 
-  //this->Internal->RendererBase = vtkSmartPointer<vtkRenderer>::New();
-  //this->Internal->RenderWindow->AddRenderer(this->Internal->RendererBase);
+  this->Internal->RendererBase = vtkSmartPointer<vtkRenderer>::New();
+  this->Internal->RenderWindow->AddRenderer(this->Internal->RendererBase);
 
   this->Internal->Renderer = vtkSmartPointer<vtkRenderer>::New();
-  //this->Internal->Renderer->SetLayer(1);
+  this->Internal->Renderer->SetLayer(1);
   this->Internal->RenderWindow->AddRenderer(this->Internal->Renderer);
 
 
@@ -181,7 +181,7 @@ vtkRenderer* ddQVTKWidgetView::renderer() const
 //-----------------------------------------------------------------------------
 vtkRenderer* ddQVTKWidgetView::backgroundRenderer() const
 {
-  return this->Internal->Renderer;
+  return this->Internal->RendererBase;
 }
 
 
