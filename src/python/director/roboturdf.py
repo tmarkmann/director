@@ -290,7 +290,6 @@ def startModelPublisherListener(modelsToReload):
     lcmUtils.addSubscriber('ROBOT_MODEL', lcmdrc.robot_urdf_t, onModelPublisherString)
 
 
-
 def setupPackagePaths():
 
     searchPaths = [
@@ -310,8 +309,13 @@ def setupPackagePaths():
         'software/models/otdf',
                   ]
 
+
+    #baseDir = getDRCBaseDir()
+    baseDir = '/Users/pat/source/drc/drc'
+
     for path in searchPaths:
-        PythonQt.dd.ddDrakeModel.addPackageSearchPath(os.path.join(getDRCBaseDir(), path))
+        print 'adding search path:', os.path.join(baseDir, path)
+        PythonQt.dd.ddDrakeModel.addPackageSearchPath(os.path.join(baseDir, path))
 
     environmentVariables = ['ROS_PACKAGE_PATH']
 
@@ -429,7 +433,11 @@ class HandLoader(object):
         self.palmToHandLink = self.handLinkToPalm.GetLinearInverse()
 
     def getHandUrdf(self):
-        urdfBase = os.path.join(getDRCBaseDir(), 'software/models/common_components')
+
+        #baseDir = getDRCBaseDir()
+        baseDir = '/Users/pat/source/drc/drc'
+
+        urdfBase = os.path.join(baseDir, 'software/models/common_components')
         return os.path.join(urdfBase, 'hand_factory', self.handUrdf)
 
     @staticmethod

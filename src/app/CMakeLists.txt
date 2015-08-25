@@ -114,6 +114,7 @@ if (USE_DRAKE)
 
   include_directories(
     ${EIGEN_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS}
     ${DRAKE_INCLUDE_DIRS}
   )
 
