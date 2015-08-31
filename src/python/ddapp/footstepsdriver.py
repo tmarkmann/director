@@ -708,6 +708,10 @@ class FootstepsDriver(object):
         self.lastFootstepPlan.footsteps[ndx+2].fixed_x = True
         self.lastFootstepPlan.footsteps[ndx+2].fixed_y = True
         self.lastFootstepPlan.footsteps[ndx+2].fixed_yaw = True
+
+        self.lastFootstepPlan.footsteps[ndx+2].fixed_z = True
+        self.lastFootstepPlan.footsteps[ndx+2].fixed_roll = True
+        self.lastFootstepPlan.footsteps[ndx+2].fixed_pitch = True
         self.sendUpdatePlanRequest()
 
     def sendUpdatePlanRequest(self):
@@ -823,6 +827,10 @@ class FootstepsDriver(object):
         elif req_type == 'controller':
             requestChannel = 'WALKING_CONTROLLER_PLAN_REQUEST'
             responseChannel = 'WALKING_CONTROLLER_PLAN_RESPONSE'
+            response_type = lcmdrc.walking_plan_t
+        elif req_type == 'queued_controller':
+            requestChannel = 'WALKING_CONTROLLER_QUEUED_PLAN_REQUEST'
+            responseChannel = 'WALKING_CONTROLLER_QUEUED_PLAN_RESPONSE'
             response_type = lcmdrc.walking_plan_t
         elif req_type == 'simulate_drake':
             requestChannel = 'WALKING_SIMULATION_DRAKE_REQUEST'

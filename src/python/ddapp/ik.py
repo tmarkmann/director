@@ -178,7 +178,7 @@ class AsyncIKCommunicator():
     def clearEnvironment(self):
         self.setEnvironment('')
 
-    def runIk(self, constraints, ikParameters, nominalPostureName=None, seedPostureName=None):
+    def runIk(self, constraints, ikParameters, nominalPostureName=None, seedPostureName=None, waitForResult=True):
 
         commands = []
         commands.append('\n%-------- runIk --------\n')
@@ -219,9 +219,14 @@ class AsyncIKCommunicator():
         commands.append('\n%-------- runIk end --------\n')
 
         self.comm.sendCommands(commands)
-        endPose = self.comm.getFloatArray('q_end')
-        info = self.comm.getFloatArray('info')[0]
 
+        def getResult():
+            endPose = self.comm.getFloatArray('q_end')
+            info = self.comm.getFloatArray('info')[0]
+            return endPose, info
+
+        if waitForResult:
+            return getResult()
         return endPose, info
 
 

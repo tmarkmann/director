@@ -374,9 +374,9 @@ def toggleFootstepWidget(displayPoint, view, useHorizontalWidget=False):
     frameObj.setProperty('Edit', True)
 
     rep = frameObj.widget.GetRepresentation()
-    rep.SetTranslateAxisEnabled(2, False)
-    rep.SetRotateAxisEnabled(0, False)
-    rep.SetRotateAxisEnabled(1, False)
+    #rep.SetTranslateAxisEnabled(2, False)
+    #rep.SetRotateAxisEnabled(0, False)
+    #rep.SetRotateAxisEnabled(1, False)
     frameObj.widget.HandleRotationEnabledOff()
 
     walkGoal = om.findObjectByName('walking goal')
