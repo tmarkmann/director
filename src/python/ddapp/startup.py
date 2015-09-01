@@ -1078,3 +1078,93 @@ def mappingSweepEnded(taskQ, task):
 if 'startup' in drcargs.args():
     for filename in drcargs.args().startup:
         execfile(filename)
+
+
+import drake as lcmdrake
+
+
+def pval(coefs, t_off):
+  out = 0.0
+  for j in xrange(coefs.size):
+    out += coefs[j]*(t_off**j)
+  return out
+
+class QPControllerInputDebug(object):
+
+    def __init__(self, robotSystem):
+        self.robotSystem = robotSystem
+
+        self.folder = om.getOrCreateContainer('qp_input_debug')
+        self.sub = lcmUtils.addSubscriber('QP_CONTROLLER_INPUT', lcmdrake.lcmt_qp_controller_input, self.onQPControllerInput)
+        self.sub.setSpeedLimit(100)
+
+        self.pelvisId = robotSystem.robotStateModel.model.findLinkID('pelvis') + 1
+        self.lfootId = robotSystem.robotStateModel.model.findLinkID('l_foot') + 1
+        self.rfootId = robotSystem.robotStateModel.model.findLinkID('r_foot') + 1
+
+    def onQPControllerInput(self, msg):
+
+        if not self.folder.getProperty('Visible'):
+            return
+
+        playbackJointController.setPose('q_des', msg.whole_body_data.q_des)
+
+        zmpPos = [msg.zmp_data.y0[0][0], msg.zmp_data.y0[1][0], 0.0]
+        d = DebugData()
+        d.addSphere(zmpPos, radius=0.01)
+        vis.updatePolyData(d.getPolyData(), 'zmp_des', color=[1, 0, 1], parent=self.folder)
+
+
+        t_global = self.robotSystem.robotStateJointController.lastRobotStateMessage.utime * 1e-6
+        color_order = [[1.0, 0.1, 0.1], [0.1, 1.0, 0.1], [0.1, 0.1, 1.0], [1.0, 1.0, 0.1], [1.0, 0.1, 1.0], [0.1, 1.0, 1.0]]
+
+        for i, bmd in enumerate(msg.body_motion_data):
+
+            draw = DebugData()
+
+            ts = bmd.spline.breaks
+
+            t_clamped = max(min(t_global, ts[-1]), ts[0]);
+            color = color_order[i%len(color_order)]
+
+            for j in range(0, bmd.spline.num_segments):
+
+              if (math.isinf(ts[j+1])):
+                continue
+
+              tsdense = np.linspace(ts[j], ts[j+1], 20);
+              ps = np.zeros((tsdense.size,
+                              bmd.spline.polynomial_matrices[j].rows,
+                              bmd.spline.polynomial_matrices[j].cols))
+
+              for k in range(0, bmd.spline.polynomial_matrices[j].rows):
+                for l in range(0, bmd.spline.polynomial_matrices[j].cols):
+                  coefs = np.array(bmd.spline.polynomial_matrices[j].polynomials[k][l].coefficients)
+                  ps[:, k, l] = [pval(coefs, t-ts[j]) for t in tsdense]
+
+              for k in range(0,tsdense.size-1):
+                  draw.addLine((ps[k,0], ps[k,1], ps[k,2]), (ps[k+1,0], ps[k+1,1], ps[k+1,2]), color=color)
+
+              if (t_clamped >= tsdense[0] and t_clamped <= tsdense[-1]):
+
+                # make marker indicating current tracking position
+                ctp = np.zeros((bmd.spline.polynomial_matrices[j].rows,
+                              bmd.spline.polynomial_matrices[j].cols))
+                for k in range(0, bmd.spline.polynomial_matrices[j].rows):
+                  for l in range(0, bmd.spline.polynomial_matrices[j].cols):
+                    coefs = np.array(bmd.spline.polynomial_matrices[j].polynomials[k][l].coefficients);
+                    ctp[k, l] = pval(coefs, t_clamped-ts[j])
+
+                xyz = [ctp[0], ctp[1], ctp[2]]
+                rpy = [ctp[3], ctp[4], ctp[5]]
+
+                frame = transformUtils.frameFromPositionAndRPY(xyz, np.degrees(rpy))
+                draw.addSphere((ctp[0], ctp[1], ctp[2]), radius=0.005, color=[0.9,0.2,0.9])
+                draw.addFrame(frame, scale=0.1)
+
+                #min_body_z = min(min_body_z, ctp[2])
+
+            vis.updatePolyData(draw.getPolyData(), 'body_motion_debug_%d' % i, colorByName='RGB255', parent=self.folder)
+
+
+#qpDebug = QPControllerInputDebug(robotSystem)

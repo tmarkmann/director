@@ -179,7 +179,7 @@ class ContinuousWalkingTaskPlanner(object):
         else:
             request.params.leading_foot = lcmdrc.footstep_plan_params_t.LEAD_RIGHT
 
-        request.params.min_num_steps = 6
+        request.params.min_num_steps = 4
         request.params.max_num_steps = 6
 
         #request.params.max_forward_step = 0.5
@@ -374,7 +374,7 @@ class AutoWalkTrigger(object):
         self.taskQueue.start()
 
     def addTasks(self):
-        self.taskQueue.addTask(self.waitForNextSingleSupport)
+        self.taskQueue.addTask(self.waitForNextDoubleSupport)
         self.taskQueue.addTask(self.plan)
         self.taskQueue.addTask(self.addTasks)
 
