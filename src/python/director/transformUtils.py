@@ -1,8 +1,8 @@
 import vtkAll as vtk
-from director import botpy
+#from director import botpy
 import math
 import numpy as np
-import drc as lcmdrc
+#import drc as lcmdrc
 
 
 def getTransformFromNumpy(mat):
