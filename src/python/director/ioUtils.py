@@ -12,6 +12,7 @@ def readPolyData(filename, computeNormals=False):
             '.ply' : vtk.vtkPLYReader,
             '.obj' : vtk.vtkOBJReader,
             '.stl' : vtk.vtkSTLReader,
+            '.off' : vtk.vtkOFFReader,
               }
 
     try:

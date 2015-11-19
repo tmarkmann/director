@@ -14,6 +14,9 @@ set(sources
 
   vtkDepthImageProcessingPass.cxx
   vtkEDLShading.cxx
+
+  vtkOFFReader.h
+  vtkOFFReader.cxx
   )
 
 
