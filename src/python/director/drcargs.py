@@ -35,11 +35,11 @@ class DRCArgParser(object):
 
     def getConfigDir(self):
         #return os.path.join(ddapp.getDRCBaseDir(), 'software/config')
-        return '/none'
+        return '/Users/pat/source/drc/drc/software/config'
 
     def getModelsDir(self):
         #return os.path.join(ddapp.getDRCBaseDir(), 'software/models')
-        return '/none'
+        return '/Users/pat/source/drc/drc/software/models'
 
     def getDefaultBotConfigFile(self):
         return os.path.join(director.getConfigDir(), 'atlas/robot.cfg')
