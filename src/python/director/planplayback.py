@@ -156,8 +156,7 @@ class PlanPlayback(object):
         pickle.dump((poseTimes, poses), open(filename, 'w'))
 
 
-    def getMovingJointNames(self, msg):
-        poseTimes, poses = self.getPlanPoses(msg)
+    def getMovingJointNames(self, poses):
         diffs = np.diff(poses, axis=0)
         jointIds =  np.unique(np.where(diffs != 0.0)[1])
         jointNames = [robotstate.getDrakePoseJointNames()[jointId] for jointId in jointIds]

@@ -47,7 +47,7 @@ class PlaybackPanel(object):
         manipPlanner.connectUseSupports(self.updateButtonColor)
 
         self.autoPlay = True
-        self.useOperationColors()
+        self.useDevelopmentColors()
 
         self.planFramesObj = None
         self.plan = None

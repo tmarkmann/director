@@ -123,6 +123,10 @@ class ScreenGrabberPanel(object):
         saveScreenshot(self.view, filename)
         app.getMainWindow().statusBar().showMessage('Saved: ' + filename, 2000)
 
+    def cleanupMovieFrames(self):
+        existingFiles = glob.glob(os.path.join(self.movieOutputDirectory(), '*.tiff'))
+        for fileToRemove in existingFiles:
+            os.remove(fileToRemove)
 
     def nextMovieFileName(self):
         filename = os.path.join(self.movieOutputDirectory(), 'frame_%07d.tiff' % self.frameCount)

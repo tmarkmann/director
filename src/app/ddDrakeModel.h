@@ -41,6 +41,10 @@ public:
   QVector<double> getJointLimits(const QString& jointName) const;
   QVector<double> getBodyContactPoints(const QString& bodyName) const;
 
+  QList<QString> collisionCheck();
+  void setupAtlasCollisionFilters();
+  void setupValkyrieCollisionFilters();
+
   bool getLinkToWorld(const QString& linkName, vtkTransform* transform);
   QList<QString> getLinkNames();
   QList<QString> getJointNames();

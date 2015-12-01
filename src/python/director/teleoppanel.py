@@ -1381,7 +1381,7 @@ class TeleopPanel(object):
     def showTeleopModel(self):
         self.teleopRobotModel.setProperty('Visible', True)
         self.robotStateModel.setProperty('Visible', True)
-        self.robotStateModel.setProperty('Alpha', 0.1)
+        self.robotStateModel.setProperty('Alpha', 0.0)
 
     def showPose(self, pose):
         self.teleopJointController.setPose('teleop_pose', pose)

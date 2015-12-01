@@ -629,6 +629,10 @@ class RobotLinkHighligher(object):
 
         self.robotModel.model.setLinkColor(linkName, newColor)
 
+    def dehighlight(self):
+        for linkName in self.previousColors.keys():
+            self.dehighlightLink(linkName)
+
     def dehighlightLink(self, linkName):
 
         color = self.previousColors.pop(linkName, None)
@@ -1085,3 +1089,40 @@ def mappingSweepEnded(taskQ, task):
 if 'startup' in drcargs.args():
     for filename in drcargs.args().startup:
         execfile(filename)
+
+
+
+robotStateJointController.models.append(chullRobotModel)
+teleopJointController.models.append(chullRobotModel)
+
+chullRobotModel.setProperty('Visible', True)
+
+print 'setup collision filters...'
+chullRobotModel.model.setupValkyrieCollisionFilters()
+print 'done'
+
+
+def collisionCheck():
+    return chullRobotModel.model.collisionCheck()
+
+
+collisionDrawModels = [RobotLinkHighligher(robotStateModel), RobotLinkHighligher(chullRobotModel), RobotLinkHighligher(playbackRobotModel), RobotLinkHighligher(teleopRobotModel)]
+collisionDrawEnabled = True
+
+
+def drawCollisionLinks(modelObj):
+
+    print 'testing collisions...'
+    if collisionDrawEnabled:
+        links = modelObj.model.collisionCheck()
+        print '---------------------\ncollision links:'
+        for link in links:
+            print link
+
+        for highlighter in collisionDrawModels:
+            highlighter.dehighlight()
+            for link in links:
+                highlighter.highlightLink(link, [1,0,0])
+
+chullRobotModel.connectModelChanged(drawCollisionLinks)
+

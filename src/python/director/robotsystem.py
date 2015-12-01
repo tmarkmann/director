@@ -48,7 +48,7 @@ class RobotSystem(object):
         useHands = True
         usePlanning = True
         useAtlasDriver = True
-        useAtlasConvexHull = False
+        useAtlasConvexHull = True
         useWidgets = False
 
         directorConfig = drcargs.getDirectorConfig()
@@ -124,7 +124,7 @@ class RobotSystem(object):
             teleopRobotModel, teleopJointController = roboturdf.loadRobotModel('teleop model', view, urdfFile=directorConfig['urdfConfig']['teleop'], parent='planning', color=roboturdf.getRobotBlueColor(), visible=False, colorMode=colorMode)
 
             if useAtlasConvexHull:
-                chullRobotModel, chullJointController = roboturdf.loadRobotModel('convex hull atlas', view, urdfFile=urdfConfig['chull'], parent='planning',
+                chullRobotModel, chullJointController = roboturdf.loadRobotModel('convex hull atlas', view, urdfFile=directorConfig['urdfConfig']['chull'], parent='planning',
                     color=roboturdf.getRobotOrangeColor(), visible=False)
                 playbackJointController.models.append(chullRobotModel)
 

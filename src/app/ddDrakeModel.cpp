@@ -45,6 +45,7 @@
 
 #include <QMap>
 #include <QDir>
+#include <QSet>
 
 using std::map;
 using std::vector;
@@ -1119,6 +1120,274 @@ QVector<double> ddDrakeModel::getJointLimits(const QString& jointName) const
   limits[1] = this->Internal->Model->joint_limit_max[dofId];
   return limits;
 }
+
+
+
+namespace {
+std::shared_ptr<RigidBody> findModelLink(URDFRigidBodyManipulatorVTK::Ptr model, const QString& linkName)
+{
+  for(size_t i = 0; i < model->bodies.size(); ++i)
+  {
+  std::shared_ptr<RigidBody> body = model->bodies[i];
+    if (QString(body->linkname.c_str()).startsWith(linkName))
+    {
+      return body;
+    }
+  }
+
+  printf("error: could not find link %s\n", linkName.toAscii().data());
+  return 0;
+}
+
+}
+
+//-----------------------------------------------------------------------------
+void ddDrakeModel::setupValkyrieCollisionFilters()
+{
+  URDFRigidBodyManipulatorVTK::Ptr model = this->Internal->Model;
+
+  findModelLink(model, "pelvis")->setCollisionFilter(1, 1);
+  findModelLink(model, "torsoYawLink")->setCollisionFilter(1, 1);
+  findModelLink(model, "torsoPitchLink")->setCollisionFilter(1, 1);
+  findModelLink(model, "torso")->setCollisionFilter(1, 1);
+
+  findModelLink(model, "lowerNeckPitchLink")->setCollisionFilter(1, 1);
+  findModelLink(model, "neckYawLink")->setCollisionFilter(1, 1);
+  findModelLink(model, "upperNeckPitchLink")->setCollisionFilter(1, 1);
+  //findModelLink(model, "hokuyo_link")->setCollisionFilter(1, 1);
+
+  findModelLink(model, "rightShoulderPitchLink")->setCollisionFilter(264, 257);
+  findModelLink(model, "rightShoulderRollLink")->setCollisionFilter(264, 257);
+  findModelLink(model, "rightShoulderYawLink")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightElbowPitchLink")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightForearmLink")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightWristRollLink")->setCollisionFilter(256, 256);
+
+  findModelLink(model, "rightPalm")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightPinkyPitch1Link")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightPinkyPitch2Link")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightPinkyPitch3Link")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightMiddleFingerPitch1Link")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightMiddleFingerPitch2Link")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightMiddleFingerPitch3Link")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightIndexFingerPitch1Link")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightIndexFingerPitch2Link")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightIndexFingerPitch3Link")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightThumbRollLink")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightThumbPitch1Link")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightThumbPitch2Link")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightThumbPitch3Link")->setCollisionFilter(256, 256);
+
+  findModelLink(model, "leftShoulderPitchLink")->setCollisionFilter(24, 17);
+  findModelLink(model, "leftShoulderRollLink")->setCollisionFilter(24, 17);
+  findModelLink(model, "leftShoulderYawLink")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftElbowPitchLink")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftForearmLink")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftWristRollLink")->setCollisionFilter(16, 16);
+
+  findModelLink(model, "leftPalm")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftPinkyPitch1Link")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftPinkyPitch2Link")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftPinkyPitch3Link")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftMiddleFingerPitch1Link")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftMiddleFingerPitch2Link")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftMiddleFingerPitch3Link")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftIndexFingerPitch1Link")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftIndexFingerPitch2Link")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftIndexFingerPitch3Link")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftThumbRollLink")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftThumbPitch1Link")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftThumbPitch2Link")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftThumbPitch3Link")->setCollisionFilter(16, 16);
+
+  findModelLink(model, "rightHipYawLink")->setCollisionFilter(1024, 1089);
+  findModelLink(model, "rightHipRollLink")->setCollisionFilter(1024, 1089);
+  findModelLink(model, "rightHipPitchLink")->setCollisionFilter(1024, 1089);
+  findModelLink(model, "rightKneePitchLink")->setCollisionFilter(512, 1536);
+  findModelLink(model, "rightAnklePitchLink")->setCollisionFilter(512, 1536);
+  findModelLink(model, "rightFoot")->setCollisionFilter(516, 1540);
+
+  findModelLink(model, "leftHipYawLink")->setCollisionFilter(64, 1089);
+  findModelLink(model, "leftHipRollLink")->setCollisionFilter(64, 1089);
+  findModelLink(model, "leftHipPitchLink")->setCollisionFilter(64, 1089);
+  findModelLink(model, "leftKneePitchLink")->setCollisionFilter(32, 96);
+  findModelLink(model, "leftAnklePitchLink")->setCollisionFilter(32, 96);
+  findModelLink(model, "leftFoot")->setCollisionFilter(36, 100);
+
+  /*
+  findModelLink(model, "pelvis")->setCollisionFilter(1, 1);
+  findModelLink(model, "torso")->setCollisionFilter(1, 1);
+
+  findModelLink(model, "upperNeckPitchLink")->setCollisionFilter(1, 1);
+
+  findModelLink(model, "rightShoulderPitchLink")->setCollisionFilter(264, 265);
+  findModelLink(model, "rightShoulderRollLink")->setCollisionFilter(264, 265);
+  findModelLink(model, "rightShoulderYawLink")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightElbowPitchLink")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightForearmLink")->setCollisionFilter(256, 256);
+
+  findModelLink(model, "rightPalm")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightPinkyPitch1Link")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightPinkyPitch2Link")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightPinkyPitch3Link")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightMiddleFingerPitch1Link")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightMiddleFingerPitch2Link")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightMiddleFingerPitch3Link")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightIndexFingerPitch1Link")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightIndexFingerPitch2Link")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightIndexFingerPitch3Link")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightThumbPitch1Link")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightThumbPitch2Link")->setCollisionFilter(256, 256);
+  findModelLink(model, "rightThumbPitch3Link")->setCollisionFilter(256, 256);
+
+  findModelLink(model, "leftShoulderPitchLink")->setCollisionFilter(24, 25);
+  findModelLink(model, "leftShoulderRollLink")->setCollisionFilter(24, 25);
+  findModelLink(model, "leftShoulderYawLink")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftElbowPitchLink")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftForearmLink")->setCollisionFilter(16, 16);
+
+  findModelLink(model, "leftPalm")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftPinkyPitch1Link")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftPinkyPitch2Link")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftPinkyPitch3Link")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftMiddleFingerPitch1Link")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftMiddleFingerPitch2Link")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftMiddleFingerPitch3Link")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftIndexFingerPitch1Link")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftIndexFingerPitch2Link")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftIndexFingerPitch3Link")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftThumbPitch1Link")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftThumbPitch2Link")->setCollisionFilter(16, 16);
+  findModelLink(model, "leftThumbPitch3Link")->setCollisionFilter(16, 16);
+
+  findModelLink(model, "rightHipYawLink")->setCollisionFilter(1025, 1601);
+  findModelLink(model, "rightHipPitchLink")->setCollisionFilter(1025, 1601);
+  findModelLink(model, "rightKneePitchLink")->setCollisionFilter(512, 1536);
+  findModelLink(model, "rightFoot")->setCollisionFilter(516, 1540);
+
+  findModelLink(model, "leftHipYawLink")->setCollisionFilter(65, 1121);
+  findModelLink(model, "leftHipPitchLink")->setCollisionFilter(65, 1121);
+  findModelLink(model, "leftKneePitchLink")->setCollisionFilter(32, 96);
+  findModelLink(model, "leftFoot")->setCollisionFilter(36, 100);
+  */
+
+
+
+  model->compile();
+}
+
+//-----------------------------------------------------------------------------
+void ddDrakeModel::setupAtlasCollisionFilters()
+{
+  URDFRigidBodyManipulatorVTK::Ptr model = this->Internal->Model;
+
+  findModelLink(model, "pelvis")->setCollisionFilter(1, 1);
+  findModelLink(model, "utorso")->setCollisionFilter(1, 1);
+  findModelLink(model, "l_clav")->setCollisionFilter(24, 17);
+  findModelLink(model, "l_uglut")->setCollisionFilter(64, 65);
+  findModelLink(model, "l_lglut")->setCollisionFilter(64, 65);
+  findModelLink(model, "l_uleg")->setCollisionFilter(64, 65);
+  findModelLink(model, "l_lleg")->setCollisionFilter(32, 96);
+  findModelLink(model, "l_foot")->setCollisionFilter(36, 100);
+  findModelLink(model, "l_scap")->setCollisionFilter(24, 17);
+  findModelLink(model, "l_uarm")->setCollisionFilter(16, 16);
+  findModelLink(model, "l_larm")->setCollisionFilter(16, 16);
+  findModelLink(model, "l_ufarm")->setCollisionFilter(16, 16);
+  findModelLink(model, "l_lfarm")->setCollisionFilter(16, 16);
+  findModelLink(model, "l_hand")->setCollisionFilter(16, 16);
+
+  findModelLink(model, "left_palm")->setCollisionFilter(16, 16);
+  findModelLink(model, "left_finger_1_link_0")->setCollisionFilter(16, 16);
+  findModelLink(model, "left_finger_1_link_1")->setCollisionFilter(16, 16);
+  findModelLink(model, "left_finger_1_link_2")->setCollisionFilter(16, 16);
+  findModelLink(model, "left_finger_1_link_3")->setCollisionFilter(16, 16);
+  findModelLink(model, "left_finger_2_link_0")->setCollisionFilter(16, 16);
+  findModelLink(model, "left_finger_2_link_1")->setCollisionFilter(16, 16);
+  findModelLink(model, "left_finger_2_link_2")->setCollisionFilter(16, 16);
+  findModelLink(model, "left_finger_2_link_3")->setCollisionFilter(16, 16);
+  findModelLink(model, "left_finger_middle_link_0")->setCollisionFilter(16, 16);
+  findModelLink(model, "left_finger_middle_link_1")->setCollisionFilter(16, 16);
+  findModelLink(model, "left_finger_middle_link_2")->setCollisionFilter(16, 16);
+  findModelLink(model, "left_finger_middle_link_3")->setCollisionFilter(16, 16);
+
+  findModelLink(model, "r_clav")->setCollisionFilter(264, 257);
+  findModelLink(model, "r_uglut")->setCollisionFilter(1024, 1089);
+  findModelLink(model, "r_lglut")->setCollisionFilter(1024, 1089);
+  findModelLink(model, "r_uleg")->setCollisionFilter(1024, 1089);
+  findModelLink(model, "r_lleg")->setCollisionFilter(512, 1536);
+  findModelLink(model, "r_foot")->setCollisionFilter(516, 1540);
+  findModelLink(model, "r_scap")->setCollisionFilter(264, 257);
+  findModelLink(model, "r_uarm")->setCollisionFilter(256, 256);
+  findModelLink(model, "r_larm")->setCollisionFilter(256, 256);
+  findModelLink(model, "r_ufarm")->setCollisionFilter(256, 256);
+  findModelLink(model, "r_lfarm")->setCollisionFilter(256, 256);
+  findModelLink(model, "r_hand")->setCollisionFilter(256, 256);
+
+  findModelLink(model, "right_palm")->setCollisionFilter(256, 256);
+  findModelLink(model, "right_finger_1_link_0")->setCollisionFilter(256, 256);
+  findModelLink(model, "right_finger_1_link_1")->setCollisionFilter(256, 256);
+  findModelLink(model, "right_finger_1_link_2")->setCollisionFilter(256, 256);
+  findModelLink(model, "right_finger_1_link_3")->setCollisionFilter(256, 256);
+  findModelLink(model, "right_finger_2_link_0")->setCollisionFilter(256, 256);
+  findModelLink(model, "right_finger_2_link_1")->setCollisionFilter(256, 256);
+  findModelLink(model, "right_finger_2_link_2")->setCollisionFilter(256, 256);
+  findModelLink(model, "right_finger_2_link_3")->setCollisionFilter(256, 256);
+  findModelLink(model, "right_finger_middle_link_0")->setCollisionFilter(256, 256);
+  findModelLink(model, "right_finger_middle_link_1")->setCollisionFilter(256, 256);
+  findModelLink(model, "right_finger_middle_link_2")->setCollisionFilter(256, 256);
+  findModelLink(model, "right_finger_middle_link_3")->setCollisionFilter(256, 256);
+
+  //findModelLink(model, "head")->setCollisionFilter(2, 3);
+  //findModelLink(model, "hokuyo_link")->setCollisionFilter(2, 3);
+  findModelLink(model, "head")->setCollisionFilter(2, 0);
+  findModelLink(model, "hokuyo_link")->setCollisionFilter(2, 0);
+
+  model->compile();
+}
+
+//-----------------------------------------------------------------------------
+QList<QString> ddDrakeModel::collisionCheck()
+{
+
+  VectorXd phi;
+  Matrix3Xd normal, xA, xB;
+  std::vector<int> bodyA_idx, bodyB_idx;
+  bool useMargins = false;
+  URDFRigidBodyManipulatorVTK::Ptr model = this->Internal->Model;
+
+  model->collisionDetect(*model->cache, phi, normal, xA, xB, bodyA_idx, bodyB_idx, useMargins);
+  //model->allCollisions(bodyA_idx, bodyB_idx, xA, xB);
+
+  QSet<QString> linksInCollision;
+
+
+  for (int j=0; j<bodyA_idx.size(); ++j) {
+
+    if (phi(j) > 0.03)
+      continue;
+
+    //std::cout << phi(j) << " ";
+    //std::cout << model->bodies[bodyA_idx.at(j)]->linkname << " ";
+    //std::cout << model->bodies[bodyB_idx.at(j)]->linkname << "  ";
+
+    //for (int i=0; i<3; ++i) {
+    //  std::cout << xA(i,j) << " ";
+    //}
+    //for (int i=0; i<3; ++i) {
+    //  std::cout << xB(i,j) << " ";
+    //}
+
+    //std::cout << std::endl;
+
+    linksInCollision.insert(model->bodies[bodyA_idx.at(j)]->linkname.c_str());
+    linksInCollision.insert(model->bodies[bodyB_idx.at(j)]->linkname.c_str());
+
+  }
+
+  return linksInCollision.toList();
+}
+
+
 
 //-----------------------------------------------------------------------------
 bool ddDrakeModel::getLinkToWorld(const QString& linkName, vtkTransform* transform)
