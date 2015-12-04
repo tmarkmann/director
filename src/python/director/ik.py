@@ -42,10 +42,19 @@ class AsyncIKCommunicator():
         commands = []
         commands.append('\n%-------- startup --------\n')
         commands.append('format long e')
-        commands.append('addpath_control')
-        commands.append("addpath([getenv('DRC_BASE'), '/software/director/src/matlab'])")
-        commands.append("robotURDF = [getenv('DRC_BASE'), '/%s'];" % os.path.relpath(self.robotURDF, director.getDRCBaseDir()))
-        commands.append("fixed_point_file = [getenv('DRC_BASE'), '/%s'];" % os.path.relpath(self.fixedPointFile, director.getDRCBaseDir()))
+
+        commands.append("addpath('/Users/pat/source/drake/drake')")
+        commands.append('addpath_pods')
+        commands.append('addpath_drake')
+
+        baseDir = '/Users/pat/source/drc/drc'
+
+        commands.append("checkDependency('lcm');")
+        commands.append("setenv('ROS_PACKAGE_PATH',['%s', pathsep, getenv('ROS_PACKAGE_PATH')]);" % (os.path.join(baseDir, 'software/models')))
+        commands.append("addpath(['%s', '/src/matlab'])" % '/Users/pat/source/drake/drake/externals/director')
+        commands.append("robotURDF = ['%s', '/%s'];" % (baseDir, os.path.relpath(self.robotURDF, baseDir)))
+        commands.append("fixed_point_file = ['%s', '/%s'];" % (baseDir, os.path.relpath(self.fixedPointFile, baseDir)))
+
         commands.append("left_foot_link = '%s';" % self.leftFootLink)
         commands.append("right_foot_link = '%s';" % self.rightFootLink)
         commands.append("pelvis_link = '%s';" % self.pelvisLink)

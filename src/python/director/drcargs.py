@@ -33,40 +33,47 @@ class DRCArgParser(object):
         else:
             self._args = parser.parse_args()
 
+    def getConfigDir(self):
+        #return os.path.join(ddapp.getDRCBaseDir(), 'software/config')
+        return '/Users/pat/source/drc/drc/software/config'
+
+    def getModelsDir(self):
+        #return os.path.join(ddapp.getDRCBaseDir(), 'software/models')
+        return '/Users/pat/source/drc/drc/software/models'
 
     def getDefaultBotConfigFile(self):
-        return os.path.join(director.getDRCBaseDir(), 'software/config/atlas/robot.cfg')
+        return os.path.join(director.getConfigDir(), 'atlas/robot.cfg')
 
     def getDefaultDirectorConfigFile(self):
         return self.getDefaultAtlasV5DirectorConfigFile();
 
     def getDefaultAtlasV3DirectorConfigFile(self):
-        return os.path.join(director.getDRCBaseDir(),
-                            'software/models/atlas_v3/director_config.json')
+        return os.path.join(director.getModelsDir(),
+                            'atlas_v3/director_config.json')
 
     def getDefaultAtlasV4DirectorConfigFile(self):
-        return os.path.join(director.getDRCBaseDir(),
-                            'software/models/atlas_v4/director_config.json')
+        return os.path.join(director.getModelsDir(),
+                            'atlas_v4/director_config.json')
 
     def getDefaultAtlasV5DirectorConfigFile(self):
-        return os.path.join(director.getDRCBaseDir(),
-                            'software/models/atlas_v5/director_config.json')
+        return os.path.join(director.getModelsDir(),
+                            'atlas_v5/director_config.json')
 
     def getDefaultValkyrieV1DirectorConfigFile(self):
-        return os.path.join(director.getDRCBaseDir(),
-                            'software/models/valkyrie/director_config.json')
+        return os.path.join(director.getModelsDir(),
+                            'valkyrie/director_config.json')
 
     def getDefaultValkyrieV2DirectorConfigFile(self):
-        return os.path.join(director.getDRCBaseDir(),
-                            'software/models/val_description/director_config.json')
+        return os.path.join(director.getModelsDir(),
+                            'val_description/director_config.json')
 
     def getDefaultValkyrieV2SimpleDirectorConfigFile(self):
         return os.path.join(director.getDRCBaseDir(),
                             'software/models/val_description/director_config_simple.json')
 
     def getDefaultKukaLWRConfigFile(self):
-        return os.path.join(director.getDRCBaseDir(),
-                            'software/models/lwr_defs/director_config.json')
+        return os.path.join(director.getModelsDir(),
+                            'lwr_defs/director_config.json')
 
     def addDefaultArgs(self, parser):
         parser.add_argument('-c', '--config_file', type=str, help='Robot cfg file',
