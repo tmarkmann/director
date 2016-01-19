@@ -1023,6 +1023,32 @@ class IgnoreOldStateMessagesSelector(object):
 IgnoreOldStateMessagesSelector(robotStateJointController)
 
 
+
+
+class IMUDisplayWidget(object):
+    '''
+    Subscribes to an ins_t channel and displays a frame
+    '''
+
+    def __init__(self, channel):
+
+        self.sub = lcmUtils.addSubscriber(channel, lcmdrc.ins_t, self.onMessage)
+        self.sub.setSpeedLimit(60)
+        self.frameName = channel
+
+    def __del__(self):
+        lcmUtils.removeSubscriber(self.sub)
+
+    def onMessage(self,msg):
+        self.quat = msg.quat
+        self.pos = [0.0, 0.0, 0.0]
+        frame = transformUtils.transformFromPose(self.pos, self.quat)
+        vis.updateFrame(frame, self.frameName, scale=0.2)
+
+imuDisplay = IMUDisplayWidget('VAL_IMU_pelvisMiddleImu')
+
+
+
 class RandomWalk(object):
     def __init__(self, max_distance_per_plan=2):
         self.subs = []
