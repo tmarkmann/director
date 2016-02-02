@@ -114,6 +114,32 @@ todo_include_todos = False
 # a list of builtin themes.
 html_theme = 'sphinx_rtd_theme'
 
+
+
+#----------------
+'''
+import alabaster
+
+html_theme_path = [alabaster.get_path()]
+extensions = ['alabaster']
+html_theme = 'alabaster'
+html_sidebars = {
+    '**': [
+           'about.html',
+           'links.html',
+           'navigation.html',
+           'localtoc.html',
+    ]
+}
+
+html_theme_options = {
+    'logo': 'drake_logo.png',
+    'github_user': 'patmarion',
+    'github_repo': 'director',
+}
+'''
+#-----------------
+
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
