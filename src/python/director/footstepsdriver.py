@@ -368,7 +368,7 @@ class FootstepsDriver(object):
 
     def showToolbarWidget(self):
 
-        if app.getMainWindow() is None:
+        if app.getMainWindow() is None or not hasattr(app.getMainWindow(), 'toolBar'):
             return
 
         if self.toolbarWidget:

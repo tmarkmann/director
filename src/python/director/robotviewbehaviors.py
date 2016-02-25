@@ -126,15 +126,19 @@ class RobotLinkSelector(object):
 
     def __init__(self):
         self.selectedLink = None
+        self.action = None
         self.setupMenuAction()
 
     def setupMenuAction(self):
+        if not app.findMenu('Tools'):
+            return
+
         self.action = app.addMenuAction('Tools', 'Robot Link Selector')
         self.action.setCheckable(True)
         self.action.checked = False
 
     def enabled(self):
-        return self.action.checked == True
+        return self.action is not None and self.action.checked == True
 
     def selectLink(self, displayPoint, view):
 
@@ -663,5 +667,4 @@ class RobotViewBehaviors(object):
         handFactory = robotSystem.handFactory
         footstepsDriver = robotSystem.footstepsDriver
         neckDriver = robotSystem.neckDriver
-        if app.getMainWindow() is not None:
-            robotLinkSelector = RobotLinkSelector()
+        robotLinkSelector = RobotLinkSelector()
