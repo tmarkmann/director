@@ -18,8 +18,6 @@ import numpy as np
 from director.simpletimer import SimpleTimer
 from director import ioUtils
 import sys
-import drc as lcmdrc
-import multisense as lcmmultisense
 
 
 def clipRange(dataObj, arrayName, thresholdRange):
@@ -61,6 +59,8 @@ def colorizePoints(polyData, cameraName='CAMERA_LEFT'):
 
 
 def sendFOVRequest(channel, imagePoints):
+
+    import drc as lcmdrc
 
     channelToImageType = {
         'CAMERA_LEFT' : lcmdrc.data_request_t.CAMERA_IMAGE_HEAD_LEFT,
@@ -841,8 +841,8 @@ def init():
     cameraView = CameraView(imageManager)
 
     addCameraView('CAMERA_LEFT', 'Head camera')
-    #addCameraView('CAMERA', 'Head camera right', 'CAMERA_RIGHT', lcmmultisense.images_t.RIGHT)
-    #addCameraView('CAMERA', 'Head camera depth', 'CAMERA_DISPARITY', lcmmultisense.images_t.DISPARITY_ZIPPED)
+    #addCameraView('CAMERA', 'Head camera right', 'CAMERA_RIGHT', lcmbotcore.images_t.RIGHT)
+    #addCameraView('CAMERA', 'Head camera depth', 'CAMERA_DISPARITY', lcmbotcore.images_t.DISPARITY_ZIPPED)
     addCameraView('CAMERACHEST_LEFT', 'Chest left')
     addCameraView('CAMERACHEST_RIGHT', 'Chest right')
     addCameraView('CAMERALHAND')

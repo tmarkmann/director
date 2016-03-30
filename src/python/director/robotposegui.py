@@ -5,9 +5,7 @@ import sys
 import json
 import time
 import os
-import drc as lcmdrc
 import bot_core as lcmbotcore
-import atlas
 import functools
 
 # allow control-c to kill the program
@@ -289,6 +287,7 @@ def publishPostureGoal(joints, postureName, channel='POSTURE_GOAL'):
 
 def publishTrajGoal(name, channel=''):
 
+    import drc as lcmdrc
     msg = lcmdrc.behavior_command_t()
     msg.utime = getUtime()
     msg.command = name

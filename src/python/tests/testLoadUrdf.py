@@ -38,6 +38,6 @@ for link in robotModel.model.getLinkNames():
     robotModel.getLinkFrame(link)
 
 
-if app.getTestingInteractiveEnabled():
-    view.show()
-    app.start()
+
+view.show()
+app.start()

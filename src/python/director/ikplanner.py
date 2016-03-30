@@ -19,15 +19,11 @@ from director import ioUtils
 from director.simpletimer import SimpleTimer
 from director.utime import getUtime
 from director import robotstate
-from director import planplayback
-from director import segmentation
 from director import drcargs
 
 from director import ik
 from director.ikparameters import IkParameters
-from director import ikconstraintencoder
 
-import drc as lcmdrc
 import bot_core as lcmbotcore
 import json
 
@@ -236,7 +232,8 @@ class IKPlanner(object):
         self.handModels = handModels
         self.plannerPub = None
 
-        self.ikServer.handModels = self.handModels
+        if self.ikServer:
+            self.ikServer.handModels = self.handModels
 
         self.reachingSide = 'left'
 
@@ -244,8 +241,6 @@ class IKPlanner(object):
         self.useQuasiStaticConstraint = True
         self.pushToMatlab = True
         self.planningMode = 'drake'
-        # is this dodgy?
-        self.ikConstraintEncoder = ikconstraintencoder.IKConstraintEncoder(self)
 
         # If the robot an arm on a fixed base, set true e.g. ABB or Kuka?
         self.fixedBaseArm = False
@@ -1313,11 +1308,13 @@ class IKPlanner(object):
         return constraintSet.runIkTraj(ikParameters=ikParameters)
 
     def getManipPlanListener(self):
+        import drc as lcmdrc
         responseChannel = 'CANDIDATE_MANIP_PLAN'
         responseMessageClass = lcmdrc.robot_plan_w_keyframes_t
         return lcmUtils.MessageResponseHelper(responseChannel, responseMessageClass)
 
     def getManipIKListener(self):
+        import drc as lcmdrc
         responseChannel = 'CANDIDATE_MANIP_IKPLAN'
         responseMessageClass = lcmdrc.robot_plan_w_keyframes_t
         return lcmUtils.MessageResponseHelper(responseChannel, responseMessageClass)

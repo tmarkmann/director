@@ -11,7 +11,6 @@ import numpy as np
 from director import ik
 from director import ikconstraints
 from director import ikconstraintencoder
-import drc as lcmdrc
 import json
 from director.utime import getUtime
 from director import lcmUtils
@@ -39,6 +38,8 @@ class PlannerPublisher(object):
     print self.jointLimits
 
   def setupMessage(self, constraints, endPoseName="", nominalPoseName="", seedPoseName="", additionalTimeSamples=None):
+
+    import drc as lcmdrc
     poses = ikconstraintencoder.getPlanPoses(constraints, self.ikPlanner)
     poses.update(self.poses)
     msg = lcmdrc.exotica_planner_request_t()

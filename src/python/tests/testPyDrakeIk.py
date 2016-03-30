@@ -1,4 +1,4 @@
-from director import robotsystem
+#from director import robotsystem
 
 import os
 import numpy as np
@@ -20,19 +20,13 @@ import pprint
 import json
 
 
-def getRobotState():
-    return robotSystem.robotStateJointController.q.copy()
-
-def getIkUrdfFilename():
-    return robotSystem.ikPlanner.robotModel.getProperty('Filename')
 
 
-def buildConstraints():
+
+def buildConstraints(ikPlanner, startPose):
     '''
     For testing, build some constraints and return them in a list.
     '''
-
-    ikPlanner = robotSystem.ikPlanner
 
     startPose = getRobotState()
 
@@ -75,37 +69,41 @@ def loadRigidBodyTree(urdfFile):
     return  rigidBodyTree
 
 
-def testIkPlan():
+def testIkPlan(ikPlanner, robotModel, jointController):
 
-    ikPlanner = robotSystem.ikPlanner
+
     ikPlanner.pushToMatlab = False
 
-    constraints = buildConstraints()
-    poses = ce.getPlanPoses(constraints, ikPlanner)
+    #startPose = jointController.q.copy()
+    #constraints = buildConstraints(ikPlanner, startPose)
+    #poses = ce.getPlanPoses(constraints, ikPlanner)
 
-    robot = loadRigidBodyTree(getIkUrdfFilename())
+    urdfFileName = ikPlanner.robotModel.getProperty('Filename')
+    robot = loadRigidBodyTree(urdfFileName)
 
     #for i, body in enumerate(robot.bodies):
     #    print i, body.linkname
 
 
+    directorConfig = drcargs.getDirectorConfig()
+
     tspan = np.array([1.0, 1.0])
 
     handLinkNames = [ikPlanner.getHandLink('left'), ikPlanner.getHandLink('right')]
-    footLinkNames = [robotSystem.directorConfig['leftFootLink'], robotSystem.directorConfig['rightFootLink']]
+    footLinkNames = [directorConfig['leftFootLink'], directorConfig['rightFootLink']]
 
     leftHandBodyId = robot.findLink(str(handLinkNames[0])).body_index
     rightHandBodyId = robot.findLink(str(handLinkNames[1])).body_index
     leftFootBodyId = robot.findLink(str(footLinkNames[0])).body_index
     rightFootBodyId = robot.findLink(str(footLinkNames[1])).body_index
 
-    lfootContactPts, rfootContactPts = robotSystem.footstepsDriver.getContactPts()
+    lfootContactPts, rfootContactPts = np.zeros((4,3)), np.zeros((4,3)) #robotSystem.footstepsDriver.getContactPts()
 
 
     footConstraints = []
 
     for linkName in footLinkNames:
-        t = robotSystem.robotStateModel.getLinkFrame(linkName)
+        t = robotModel.getLinkFrame(linkName)
         pos, quat = transformUtils.poseFromTransform(t)
 
         pc = ik.WorldPositionConstraint(robot, robot.findLink(str(linkName)).body_index, np.zeros((3,)), pos, pos, tspan)
@@ -122,7 +120,7 @@ def testIkPlan():
 
 
     #q_seed = robot.getZeroConfiguration()
-    q_seed = robotSystem.robotStateJointController.getPose('q_nom').copy()
+    q_seed = jointController.getPose('q_nom').copy()
 
     # todo, joint costs, and other options
     options = ik.IKoptions(robot)
@@ -131,7 +129,7 @@ def testIkPlan():
 
         results = ik.inverseKinSimple(robot, q_seed, q_seed, constraints, options)
         pose = results.q_sol
-        robotSystem.robotStateJointController.setPose('pose_end', pose)
+        jointController.setPose('pose_end', pose)
 
 
     def onFrameModified(obj):
@@ -149,7 +147,7 @@ def testIkPlan():
         solveAndDraw([qsc, pc, qc] + footConstraints)
 
 
-    frameObj = vis.updateFrame(robotSystem.robotStateModel.getLinkFrame(ikPlanner.getHandLink('left')), 'left hand frame')
+    frameObj = vis.updateFrame(robotModel.getLinkFrame(ikPlanner.getHandLink('left')), 'left hand frame')
     frameObj.setProperty('Edit', True)
     frameObj.setProperty('Scale', 0.2)
     frameObj.connectFrameModified(onFrameModified)
@@ -159,10 +157,24 @@ app = ConsoleApp()
 app.setupGlobals(globals())
 
 view = app.createView()
-robotSystem = robotsystem.create(view)
+
+directorConfig = drcargs.getDirectorConfig()
+print directorConfig['urdfConfig']['ik']
+
+robotModel, jointController = roboturdf.loadRobotModel('robot model', urdfFile=directorConfig['urdfConfig']['ik'], view=view)
 
 
-testIkPlan()
+handFactory = roboturdf.HandFactory(robotModel)
+handModels = []
+
+for side in ['left', 'right']:
+    if side in handFactory.defaultHandTypes:
+        handModels.append(handFactory.getLoader(side))
+
+ikPlanner = ikplanner.IKPlanner(None, robotModel, jointController, handModels)
+
+
+testIkPlan(ikPlanner, robotModel, jointController)
 
 view.show()
 app.start()
