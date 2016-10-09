@@ -9,8 +9,16 @@ find_package(PythonInterp 2.7 REQUIRED)
 find_package(PythonQt REQUIRED)
 find_package(CTKPythonConsole REQUIRED)
 find_package(OpenGL REQUIRED)
-find_package(VTK REQUIRED)
 find_package(QtPropertyBrowser REQUIRED)
+
+find_package(VTK COMPONENTS
+  vtkGUISupportQt
+  vtkRenderingOpenGL2
+  vtkRenderingAnnotation
+  vtkInteractionWidgets
+  vtkWrappingPythonCore
+  REQUIRED
+  )
 
 include(${VTK_USE_FILE})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
@@ -84,11 +92,6 @@ set(srcs
   vtkTDxInteractorStyleCallback.cxx
   )
 
-
-set(VTK_LIBRARIES
-  QVTK
-  vtkPythonCore
-  )
 
 set(deps
   ${QT_LIBRARIES}

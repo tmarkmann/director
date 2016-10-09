@@ -99,7 +99,7 @@ class ConsoleApp(object):
         view = PythonQt.dd.ddQVTKWidgetView()
         view.resize(600, 400)
 
-        applogic.setCameraTerrainModeEnabled(view, True)
+        #applogic.setCameraTerrainModeEnabled(view, True)
         if useGrid:
             self.gridObj = vis.showGrid(view, parent='scene')
 

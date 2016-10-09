@@ -23,7 +23,7 @@ class PolyDataItem(om.ObjectModelItem):
         self.views = []
         self.polyData = polyData
         self.mapper = vtk.vtkPolyDataMapper()
-        self.mapper.SetInput(self.polyData)
+        self.mapper.SetInputData(self.polyData)
         self.actor = vtk.vtkActor()
         self.actor.SetMapper(self.mapper)
         self.shadowActor = None
@@ -68,7 +68,7 @@ class PolyDataItem(om.ObjectModelItem):
     def setPolyData(self, polyData):
 
         self.polyData = polyData
-        self.mapper.SetInput(polyData)
+        self.mapper.SetInputData(polyData)
 
         self._updateSurfaceProperty()
         self._updateColorByProperty()

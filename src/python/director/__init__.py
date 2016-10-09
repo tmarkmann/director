@@ -25,7 +25,8 @@ def updateSysPath(path):
 _initCoverage()
 
 # this is for mac homebrew users
-updateSysPath('/usr/local/opt/vtk5/lib/python2.7/site-packages')
+#updateSysPath('/usr/local/opt/vtk5/lib/python2.7/site-packages')
+updateSysPath('/Users/pat/source/vtk/install-v7/lib/python2.7/site-packages')
 
 # this inserts the build dirs in the path before anything else
 # this ensures modules in the build dirs will take precedence over

@@ -10,10 +10,10 @@ set(sources
   vtkFrameWidget.cxx
   vtkFrameWidgetRepresentation.cxx
 
-  vtkInteractorStyleTerrain2.cxx
+  #vtkInteractorStyleTerrain2.cxx
 
-  vtkDepthImageProcessingPass.cxx
-  vtkEDLShading.cxx
+  #vtkDepthImageProcessingPass.cxx
+  #vtkEDLShading.cxx
   )
 
 
@@ -36,6 +36,8 @@ set(GLSL_SRCS
 # -----------------------------------------------------------------------------
 set(EXTRA_SRCS)
 
+if(FALSE)
+
 if(NOT EXISTS "${VTK_ENCODESTRING_EXE}")
   message(SEND_ERROR "The required vtkEncodeString executable was not found.\nThis may indicate an error in your VTK install or configuration.")
 endif()
@@ -52,13 +54,17 @@ foreach(file ${GLSL_SRCS})
   set(EXTRA_SRCS ${EXTRA_SRCS} ${res})
 endforeach(file)
 
+endif()
 
 #####
 
-set(VTK_LIBRARIES
-  vtkFiltering
-  vtkIO
-  vtkWidgets
+find_package(VTK COMPONENTS
+  vtkInteractionStyle
+  vtkInteractionWidgets
+  vtkRenderingFreeType
+  vtkRenderingOpenGL2
+  vtkRenderingVolumeOpenGL2
+  REQUIRED
   )
 
 
