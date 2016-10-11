@@ -131,9 +131,9 @@ class KinectSource(TimerCallback):
         if not p.GetNumberOfPoints():
             return
 
-        cameraToLocalFused = vtk.vtkTransform()
-        self.queue.getTransform('KINECT_RGB', 'local', utime, cameraToLocalFused)
-        p = filterUtils.transformPolyData(p,cameraToLocalFused)
+        #cameraToLocalFused = vtk.vtkTransform()
+        #self.queue.getTransform('KINECT_RGB', 'local', utime, cameraToLocalFused)
+        #p = filterUtils.transformPolyData(p,cameraToLocalFused)
         self.polyDataObj.setPolyData(p)
 
         if not self.polyDataObj.initialized:
