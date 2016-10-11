@@ -1705,6 +1705,26 @@ def applyICP(source, target):
     return t
 
 
+_computeRobustNormals = False
+
+_maxIterations = 100
+_maxEstimationError = 0.01
+_maxCenterError = 0.02
+_radius = 0.1
+
+
+def applyRobustNormalEstimation(polyData):
+    f = vtk.vtkRobustNormalEstimator()
+    f.SetInput(polyData)
+    f.SetMaxIterations(100)
+    f.SetMaxEstimationError(0.01)
+    f.SetMaxCenterError(0.02)
+    f.SetComputeCurvature(True)
+    f.SetRadius(0.1)
+    f.Update()
+    return shallowCopy(f.GetOutput())
+
+
 def applyDiskGlyphs(polyData, computeNormals=True):
 
     voxelGridLeafSize = 0.03
@@ -1714,15 +1734,16 @@ def applyDiskGlyphs(polyData, computeNormals=True):
 
     if computeNormals:
         scanInput = polyData
+        polyData = applyVoxelGrid(scanInput, leafSize=voxelGridLeafSize)
+        polyData = labelOutliers(polyData, searchRadius=normalEstimationSearchRadius, neighborsInSearchRadius=3)
+        polyData = thresholdPoints(polyData, 'is_outlier', [0, 0])
 
-        pd = applyVoxelGrid(scanInput, leafSize=voxelGridLeafSize)
+        if _computeRobustNormals:
+            polyData = applyRobustNormalEstimation(polyData)
+        else:
+            polyData = normalEstimation(polyData, searchRadius=normalEstimationSearchRadius, searchCloud=scanInput)
 
-        pd = labelOutliers(pd, searchRadius=normalEstimationSearchRadius, neighborsInSearchRadius=3)
-        pd = thresholdPoints(pd, 'is_outlier', [0, 0])
-
-        pd = normalEstimation(pd, searchRadius=normalEstimationSearchRadius, searchCloud=scanInput)
-    else:
-        pd = polyData
+        flipNormalsWithViewDirection(polyData, SegmentationContext.getGlobalInstance().getViewDirection())
 
     assert polyData.GetPointData().GetNormals()
 
@@ -1741,7 +1762,7 @@ def applyDiskGlyphs(polyData, computeNormals=True):
     glyph.ScalingOff()
     glyph.OrientOn()
     glyph.SetSource(disk)
-    glyph.SetInput(pd)
+    glyph.SetInput(polyData)
     glyph.SetVectorModeToUseNormal()
     glyph.Update()
 
@@ -1751,9 +1772,15 @@ def applyDiskGlyphs(polyData, computeNormals=True):
 def applyArrowGlyphs(polyData, computeNormals=True, voxelGridLeafSize=0.03, normalEstimationSearchRadius=0.05, arrowSize=0.02):
 
     if computeNormals:
-        polyData = applyVoxelGrid(polyData, leafSize=0.02)
-        voxelData = applyVoxelGrid(polyData, leafSize=voxelGridLeafSize)
-        polyData = normalEstimation(polyData, searchRadius=normalEstimationSearchRadius, searchCloud=voxelData)
+
+        if _computeRobustNormals:
+            polyData = applyRobustNormalEstimation(polyData)
+        else:
+            #polyData = applyVoxelGrid(polyData, leafSize=0.02)
+            #voxelData = applyVoxelGrid(polyData, leafSize=voxelGridLeafSize)
+            #polyData = normalEstimation(polyData, searchRadius=normalEstimationSearchRadius, searchCloud=voxelData)
+            polyData = normalEstimation(polyData, searchRadius=normalEstimationSearchRadius)
+
         polyData = removeNonFinitePoints(polyData, 'normals')
         flipNormalsWithViewDirection(polyData, SegmentationContext.getGlobalInstance().getViewDirection())
 
@@ -2692,13 +2719,14 @@ def fitGroundObject(polyData=None, expectedDimensionsMin=[0.2, 0.02], expectedDi
     return vis.showClusterObjects([obj], parent='segmentation')[0]
 
 def findHorizontalSurfaces(polyData, removeGroundFirst=False, normalEstimationSearchRadius=0.05,
-                          clusterTolerance=0.025, minClusterSize=150, distanceToPlaneThreshold=0.0025, normalsDotUpRange=[0.95, 1.0], showClusters=False):
+                          clusterTolerance=0.025, minClusterSize=150, distanceToPlaneThreshold=0.0025, normalsDotUpRange=[0.95, 1.0], showClusters=False, voxelGridLeafSize = 0.01):
     '''
     Find the horizontal surfaces, tuned to work with walking terrain
     '''
 
+    polyData = applyVoxelGrid(polyData, voxelGridLeafSize)
+
     searchZ = [0.0, 2.0]
-    voxelGridLeafSize = 0.01
     verboseFlag = False
 
     if (removeGroundFirst):
@@ -2732,6 +2760,8 @@ def findHorizontalSurfaces(polyData, removeGroundFirst=False, normalEstimationSe
     updatePolyData(surfaces, 'surfaces points', parent=getDebugFolder(), colorByName='normals_dot_up', visible=verboseFlag)
 
     clusters = extractClusters(surfaces, clusterTolerance=clusterTolerance, minClusterSize=minClusterSize)
+    print 'got %d clusters' % len(clusters)
+
     planeClusters = []
     clustersLarge = []
 
@@ -4447,6 +4477,156 @@ def segmentBoundedPlaneByAnnotation(point1, point2):
     updateFrame(t, 'plane edge frame', parent=getDebugFolder(), visible=False)
 
 
+
+def getMergedConvexHullsMesh(chulls):
+    d = DebugData()
+    for i, chull in enumerate(chulls):
+        d.addPolyData(chull.convexHull, color=getRandomColor())
+    return d.getPolyData()
+
+def computePlanarConvexHull(polyData, expectedNormal=None):
+
+    plane = vtk.vtkPlane()
+    vtk.vtkSurfaceFitter.ComputePlane(polyData, plane)
+
+    if expectedNormal is not None:
+        planeNormal = plane.GetNormal()
+        if np.dot(planeNormal, expectedNormal) < 0:
+            plane.SetNormal(-1*np.array(planeNormal))
+
+    chull = vtk.vtkPolyData()
+    vtk.vtkSurfaceFitter.ComputeConvexHull(polyData, plane, chull)
+    return FieldContainer(points=polyData, convexHull=chull, plane=plane)
+
+'''
+segmentation.runRegionGrowingPlaneSegmentation(om.getActiveObject().polyData)
+'''
+
+def runRegionGrowingPlaneSegmentation(polyData, useTerrainOptions=True, doRemoveGround=True, useVoxelGrid=True):
+
+
+    if doRemoveGround:
+        groundPoints, scenePoints = removeGround(polyData)
+        vis.showPolyData(groundPoints, 'ground', visible=False)
+        polyData = scenePoints
+
+    if useVoxelGrid:
+        polyData = applyVoxelGrid(polyData, leafSize=0.02)
+
+
+    f = vtk.vtkSurfaceFitter()
+    f.SetInput(polyData)
+
+
+    if useTerrainOptions:
+        f.SetMaxError(0.07)
+        f.SetMaxAngle(np.radians(8))
+        f.SetSearchRadius(0.06)
+        f.SetMinimumNumberOfPoints(100)
+    else:
+        f.SetMaxError(0.005)
+        f.SetMaxAngle(np.radians(15))
+        f.SetSearchRadius(0.01)
+        f.SetMinimumNumberOfPoints(10)
+
+        ne = f.GetRobustNormalEstimator()
+        ne.SetRadius(0.01)
+        ne.SetMaxEstimationError(0.01)
+        ne.SetMaxCenterError(0.01)
+
+
+    f.Update()
+    polyData = shallowCopy(f.GetOutput())
+
+    polyData = removeNonFinitePoints(polyData, 'normals')
+
+    labels = vnp.getNumpyFromVtk(polyData, 'plane_segmentation_labels')
+    maxLabel = labels.max()
+
+    polyData = thresholdPoints(polyData, 'plane_segmentation_labels', [1, maxLabel])
+    vis.showPolyData(polyData, 'segmented cloud', colorByName='plane_segmentation_labels', visible=False)
+
+    chulls = []
+
+    for i in xrange(1, maxLabel+1):
+
+        planePoints = thresholdPoints(polyData, 'plane_segmentation_labels', [i, i])
+
+        if not planePoints.GetPointData().GetArray('normals'):
+            print 'warning, extracted plane %d has no normals' % i
+
+        expectedNormal = -1 * SegmentationContext.getGlobalInstance().getViewDirection()
+        chulls.append(computePlanarConvexHull(planePoints, expectedNormal=expectedNormal))
+
+
+    if doRemoveGround:
+        chulls.append(computePlanarConvexHull(groundPoints, expectedNormal=[0,0,1]))
+
+
+    d = DebugData()
+    folder = om.getOrCreateContainer('region grown plane segmentation')
+    pointsFolder = om.getOrCreateContainer('points', parentObj=folder)
+    hullsFolder = om.getOrCreateContainer('convex hulls', parentObj=folder)
+
+    for i, result in enumerate(chulls):
+
+        planePoints, chull, plane = result.points, result.convexHull, result.plane
+
+        if not planePoints.GetPointData().GetArray('normals'):
+            print 'no normals for plane', i
+            print 'num points:', planePoints.GetNumberOfPoints()
+            continue
+
+        center = computeCentroid(chull)
+
+        normals = vnp.getNumpyFromVtk(planePoints, 'normals')
+        positions = vnp.getNumpyFromVtk(planePoints, 'Points')
+        angles = np.degrees(np.arccos(np.dot(normals, np.array(plane.GetNormal()))))
+        dists = np.dot(positions - center, np.array(plane.GetNormal()))
+
+        vnp.addNumpyToVtk(planePoints, angles, 'normal angle to plane')
+        vnp.addNumpyToVtk(planePoints, dists, 'point distance to plane')
+
+        c = getRandomColor()
+        obj = vis.showPolyData(planePoints, 'plane %d' % i, color=c, parent=pointsFolder)
+        obj.setProperty('Point Size', 4)
+        obj.setProperty('Color By', 'normal angle to plane')
+        chull = vis.showPolyData(chull, 'convex hull %d' % i, color=c, parent=hullsFolder)
+        chull.setProperty('Surface Mode', 'Surface with edges')
+        chull.actor.GetProperty().SetLineWidth(3)
+
+
+        chullPoints = vnp.getNumpyFromVtk(chull.polyData, 'Points')
+        d.addLine(plane.GetOrigin(), np.array(plane.GetOrigin()) + 0.01 * np.array(plane.GetNormal()), color=[0,0,0]) #radius=0.0002
+
+    #pointsFolder.setProperty('Visible', False)
+    #hullsFolder.setProperty('Visible', False)
+
+    vis.showPolyData(d.getPolyData(), 'plane normals', colorByName='RGB255', parent=folder)
+    planesObj = vis.showPolyData(getMergedConvexHullsMesh(chulls), 'merged planes', colorByName='RGB255', parent=folder, visible=False)
+    planesObj.setProperty('Surface Mode', 'Surface with edges')
+    planesObj.actor.GetProperty().SetLineWidth(3)
+
+    '''
+    viewDirection = np.array(SegmentationContext.getGlobalInstance().getViewDirection())
+    viewOrigin = np.array(SegmentationContext.getGlobalInstance().getViewOrigin())
+    viewDirection[2] = 0.0
+    viewDirection /= np.linalg.norm(viewDirection)
+    viewOrigin += viewDirection*0.5
+
+    clipPlane = vtk.vtkPlane()
+    clipPlane.SetOrigin(viewOrigin)
+    clipPlane.SetNormal(viewDirection)
+
+    clipper = vtk.vtkClipPolyData()
+    clipper.SetInput(planesObj.polyData)
+    clipper.SetClipFunction(clipPlane)
+    clipper.SetValue(0)
+    clipper.Update()
+
+    clippedPlanes = shallowCopy(clipper.GetOutput())
+    vis.showPolyData(clippedPlanes, 'clipped planes', colorByName='RGB255', parent=folder)
+    '''
 
 savedCameraParams = None
 
