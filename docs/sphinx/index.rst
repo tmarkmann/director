@@ -10,3 +10,8 @@ Welcome to the Director's Documentation
     user_guide/index
     developer_guide/index
     Python Module API <generated/modules>
+
+Hello and welcome to the documentation.
+
+.. image:: drake_logo.png
+   :width: 80pt
