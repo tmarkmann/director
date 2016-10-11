@@ -16,6 +16,7 @@
 
 #include <pcl/common/io.h>
 #include <pcl/surface/convex_hull.h>
+#include <pcl/surface/concave_hull.h>
 #include <plane-seg/RobustNormalEstimator.hpp>
 #include <plane-seg/PlaneSegmenter.hpp>
 
@@ -166,6 +167,53 @@ void vtkSurfaceFitter::ComputeConvexHull(vtkPolyData* polyData, vtkPlane* plane,
   convexHull->SetPoints(p);
   convexHull->Allocate(1,1);
   convexHull->InsertNextCell(pp->GetCellType(), pp->GetPointIds());
+}
+
+
+//----------------------------------------------------------------------------
+void vtkSurfaceFitter::ComputeConcaveHull(vtkPolyData* polyData, vtkPlane* plane, vtkPolyData* concaveHull, double alpha)
+{
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = PointCloudFromPolyData(polyData);
+
+  double* origin = plane->GetOrigin();
+  double* normal = plane->GetNormal();
+
+  for (size_t i = 0; i < cloud->size(); ++i)
+    {
+    Eigen::Vector3d pt(cloud->points[i].x, cloud->points[i].y, cloud->points[i].z);
+    vtkPlane::ProjectPoint(pt.data(), origin, normal, pt.data());
+
+    cloud->points[i].x = pt[0];
+    cloud->points[i].y = pt[1];
+    cloud->points[i].z = pt[2];
+    }
+
+  pcl::PointCloud<pcl::PointXYZ> hull;
+  pcl::ConcaveHull<pcl::PointXYZ> filter;
+  filter.setInputCloud(cloud);
+  filter.setAlpha(alpha);
+  filter.reconstruct(hull);
+
+  size_t hullSize = hull.size();
+
+  //printf("got %d hull points\n", hullSize);
+
+  vtkSmartPointer<vtkPoints> p = vtkSmartPointer<vtkPoints>::New();
+  vtkSmartPointer<vtkPolygon> pp = vtkSmartPointer<vtkPolygon>::New();
+
+  p->SetNumberOfPoints(hullSize);
+  pp->GetPointIds()->SetNumberOfIds(hullSize);
+
+
+  for (size_t i = 0; i < hull.size(); ++i)
+    {
+    p->InsertPoint(i, hull[i].x, hull[i].y, hull[i].z);
+    pp->GetPointIds()->SetId(i, i);
+    }
+
+  concaveHull->SetPoints(p);
+  concaveHull->Allocate(1,1);
+  concaveHull->InsertNextCell(pp->GetCellType(), pp->GetPointIds());
 }
 
 //----------------------------------------------------------------------------

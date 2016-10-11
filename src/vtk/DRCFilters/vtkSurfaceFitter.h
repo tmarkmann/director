@@ -45,6 +45,7 @@ public:
 
   static void ComputePlane(vtkPolyData* polyData, vtkPlane* plane);
   static void ComputeConvexHull(vtkPolyData* polyData, vtkPlane* plane, vtkPolyData* convexHull);
+  static void ComputeConcaveHull(vtkPolyData* polyData, vtkPlane* plane, vtkPolyData* concaveHull, double alpha);
   static void ComputeMinimumAreaRectangleFit(vtkPolyData* polyData, vtkPlane* plane, vtkRectd* rectangle);
   static void ComputeKnownSizeRectangleFit(vtkPolyData* polyData, vtkPlane* plane, vtkRectd* rectangle);
 
