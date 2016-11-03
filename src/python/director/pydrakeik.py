@@ -33,8 +33,7 @@ class PyDrakePlannerPublisher(plannerPublisher.PlannerPublisher):
         self.counter = FPSCounter()
         self.counter.printToConsole = True
 
-        # disabled for now
-        #self._setupLocalServer()
+        self._setupLocalServer()
 
     def _setupLocalServer(self):
 
@@ -212,6 +211,7 @@ class PyDrakeIkServer(object):
 
         rigidBodyTree = pydrake.rbtree.RigidBodyTree()
         rigidBodyTree.addRobotFromURDFString(urdfString, packageMap, baseDir)
+
         return rigidBodyTree
 
     def makeIkOptions(self, fields):

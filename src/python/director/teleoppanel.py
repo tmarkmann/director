@@ -8,7 +8,7 @@ from director import visualization as vis
 from director import transformUtils
 from director import ikconstraints
 from director import ikplanner
-from director import footstepsdriver
+#from director import footstepsdriver
 from director import vtkAll as vtk
 from director import drcargs
 from director import affordanceurdf
@@ -101,7 +101,7 @@ class EndEffectorTeleopPanel(object):
         self.palmOffsetDistance = 0.0
         self.palmGazeAxis = [0.0, 1.0, 0.0]
         self.constraintSet = None
-        
+        self.robotHighlighted = False
         lcmUtils.addSubscriber('CANDIDATE_ROBOT_ENDPOSE', lcmbotcore.robot_state_t, self.onCandidateEndPose)
 
         #self.ui.interactiveCheckbox.visible = False
@@ -335,6 +335,17 @@ class EndEffectorTeleopPanel(object):
         self.panel.showPose(self.constraintSet.endPose)
         app.displaySnoptInfo(info)
 
+        inFeasible = info >= 10
+
+        if inFeasible and not self.robotHighlighted:
+            self.panel.teleopRobotModel.model.setColor(QtGui.QColor(255,120,120))
+            self.robotHighlighted = True
+
+        if not inFeasible and self.robotHighlighted:
+            self.panel.teleopRobotModel._updateModelColor()
+            self.robotHighlighted = False
+
+
 
     def updateCollisionEnvironment(self):
         affs = self.panel.affordanceManager.getCollisionAffordances()
@@ -347,7 +358,8 @@ class EndEffectorTeleopPanel(object):
     def planClicked(self):
         if not self.ui.eeTeleopButton.checked and not self.getCheckboxState(self.ui.finalPosePlanningOptions):
             return
-        self.updateCollisionEnvironment()
+        # fixme - this call accesses matlab ikServer
+        #self.updateCollisionEnvironment()
         self.generatePlan()
 
     def generatePlan(self):
@@ -439,14 +451,16 @@ class EndEffectorTeleopPanel(object):
             constraints.append(ikPlanner.createLockedNeckPostureConstraint(startPoseName))
 
             if self.getLFootConstraint() == 'fixed':
-                constraints.append(ikPlanner.createFixedLinkConstraints(startPoseName, ikPlanner.leftFootLink, tspan=[0.0, 1.0], lowerBound=-0.0001*np.ones(3), upperBound=0.0001*np.ones(3), angleToleranceInDegrees=0.1))
+                #constraints.append(ikPlanner.createFixedLinkConstraints(startPoseName, ikPlanner.leftFootLink, tspan=[0.0, 1.0], lowerBound=-0.0001*np.ones(3), upperBound=0.0001*np.ones(3), angleToleranceInDegrees=0.1))
+                constraints.extend(ikPlanner.createSixDofLinkConstraints(startPoseName, ikPlanner.leftFootLink, tspan=[0.0, 1.0]))
             elif self.getLFootConstraint() == 'constrained':
                 constraints.extend(ikPlanner.createSixDofLinkConstraints(startPoseName, ikPlanner.leftFootLink, tspan=[1.0, 1.0]))
             elif self.getLFootConstraint() == 'sliding':
                 constraints.extend(ikPlanner.createSlidingFootConstraints(startPoseName)[:2])
 
             if self.getRFootConstraint() == 'fixed':
-                constraints.append(ikPlanner.createFixedLinkConstraints(startPoseName, ikPlanner.rightFootLink, tspan=[0.0, 1.0], lowerBound=-0.0001*np.ones(3), upperBound=0.0001*np.ones(3), angleToleranceInDegrees=0.1))
+                #constraints.append(ikPlanner.createFixedLinkConstraints(startPoseName, ikPlanner.rightFootLink, tspan=[0.0, 1.0], lowerBound=-0.0001*np.ones(3), upperBound=0.0001*np.ones(3), angleToleranceInDegrees=0.1))
+                constraints.extend(ikPlanner.createSixDofLinkConstraints(startPoseName, ikPlanner.rightFootLink, tspan=[0.0, 1.0]))
             elif self.getRFootConstraint() == 'constrained':
                 constraints.extend(ikPlanner.createSixDofLinkConstraints(startPoseName, ikPlanner.rightFootLink, tspan=[1.0, 1.0]))
             elif self.getRFootConstraint() == 'sliding':
@@ -1221,7 +1235,9 @@ class JointTeleopPanel(object):
 
     def computeBaseJointOffsets(self):
 
-        baseReferenceFrame = footstepsdriver.FootstepsDriver.getFeetMidPoint(self.panel.ikPlanner.getRobotModelAtPose(self.startPose))
+        #baseReferenceFrame = footstepsdriver.FootstepsDriver.getFeetMidPoint(self.panel.ikPlanner.getRobotModelAtPose(self.startPose))
+        baseReferenceFrame = vtk.vtkTransform()
+
         baseReferenceWorldPos = np.array(baseReferenceFrame.GetPosition())
         baseReferenceWorldYaw = math.radians(baseReferenceFrame.GetOrientation()[2])
 

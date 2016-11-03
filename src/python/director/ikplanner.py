@@ -394,8 +394,11 @@ class IKPlanner(object):
         if self.rightFootSupportEnabled:
             linknames.append(self.rightFootLink)
         for linkName in linknames:
-            p = self.createFixedLinkConstraints(startPoseName, linkName, **kwargs)
-            constraints.append(p)
+            #p = self.createFixedLinkConstraints(startPoseName, linkName, **kwargs)
+            #constraints.append(p)
+
+            constraints.extend(self.createSixDofLinkConstraints(startPoseName, linkName, **kwargs))
+
         return constraints
 
     def createSixDofLinkConstraints(self, startPose, linkName, **kwargs):
@@ -403,7 +406,7 @@ class IKPlanner(object):
         p = ikconstraints.PositionConstraint(
             linkName=linkName, referenceFrame=linkFrame, lowerBound=-0.0001*np.ones(3), upperBound=0.0001*np.ones(3),**kwargs)
         q = ikconstraints.QuatConstraint(
-            linkName=linkName, quaternion=linkFrame, **kwargs)
+            linkName=linkName, quaternion=linkFrame, angleToleranceInDegrees=0.2, **kwargs)
         return [p, q]
 
     def createFixedLinkConstraints(self, startPose, linkName, **kwargs):

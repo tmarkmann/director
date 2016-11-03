@@ -260,9 +260,14 @@ class PlaybackPanel(object):
 
 
     def onPlanCommitted(self, plan):
-        self.setPlan(None)
-        self.hideClicked()
+        #self.setPlan(None)
+        #self.hideClicked()
 
+        self.startAnimation()
+        self.playbackRobotModel.setProperty('Visible', True)
+        self.playbackRobotModel.setProperty('Alpha', 0.1)
+        self.robotStateModel.setProperty('Visible', True)
+        self.robotStateModel.setProperty('Alpha', 1.0)
 
     def stopClicked(self):
         self.stopAnimation()
