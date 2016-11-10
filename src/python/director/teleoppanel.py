@@ -101,7 +101,7 @@ class EndEffectorTeleopPanel(object):
         self.palmOffsetDistance = 0.0
         self.palmGazeAxis = [0.0, 1.0, 0.0]
         self.constraintSet = None
-        
+
         lcmUtils.addSubscriber('CANDIDATE_ROBOT_ENDPOSE', lcmbotcore.robot_state_t, self.onCandidateEndPose)
 
         #self.ui.interactiveCheckbox.visible = False
@@ -333,8 +333,8 @@ class EndEffectorTeleopPanel(object):
     def updateIk(self):
         endPose, info = self.constraintSet.runIk()
         self.panel.showPose(self.constraintSet.endPose)
+        self.panel.robotHighlighter.updateWithPlanInfo(info)
         app.displaySnoptInfo(info)
-
 
     def updateCollisionEnvironment(self):
         affs = self.panel.affordanceManager.getCollisionAffordances()
@@ -351,7 +351,7 @@ class EndEffectorTeleopPanel(object):
         self.generatePlan()
 
     def generatePlan(self):
-        
+
         self.updateConstraints()
         if not self.ui.interactiveCheckbox.checked:
             self.updateIk()
@@ -919,8 +919,6 @@ class JointLimitChecker(object):
         return robotstate.getDrakePoseJointNames().index(jointName)
 
 
-
-
 class GeneralEndEffectorTeleopPanel(object):
 
     def __init__(self, ikPlanner, teleopPanel, robotStateModel, robotStateJointController):
@@ -1014,6 +1012,7 @@ class GeneralEndEffectorTeleopPanel(object):
         def onGoalFrameModified(frame):
             endPose, info = self.constraintSet.runIk()
             self.teleopPanel.showPose(self.constraintSet.endPose)
+            self.teleopPanel.robotHighlighter.updateWithPlanInfo(info)
             app.displaySnoptInfo(info)
 
         goalFrame.connectFrameModified(onGoalFrameModified)
@@ -1327,6 +1326,30 @@ class JointTeleopPanel(object):
             self.updateLabel(jointName, jointValue)
 
 
+class RobotHighlighter(object):
+
+    def __init__(self, robotModel):
+        self.robotHighlighted = False
+        self.robotModel = robotModel
+
+    def updateWithPlanInfo(self, info):
+        isFeasible = (0 <= info < 10)
+        if isFeasible:
+            self.dehighlight()
+        else:
+            self.highlight()
+
+    def highlight(self):
+        if not self.robotHighlighted:
+            self.robotModel.model.setColor(QtGui.QColor(255,120,120))
+            self.robotHighlighted = True
+
+    def dehighlight(self):
+        if self.robotHighlighted:
+            self.robotModel._updateModelColor()
+            self.robotHighlighted = False
+
+
 class TeleopPanel(object):
 
     def __init__(self, robotStateModel, robotStateJointController, teleopRobotModel, teleopJointController, ikPlanner, manipPlanner, affordanceManager, showPlanFunction, hidePlanFunction, planningUtils):
@@ -1341,6 +1364,7 @@ class TeleopPanel(object):
         self.showPlanFunction = showPlanFunction
         self.hidePlanFunction = hidePlanFunction
         self.planningUtils = planningUtils
+        self.robotHighlighter = RobotHighlighter(self.teleopRobotModel)
 
         manipPlanner.connectPlanCommitted(self.onPlanCommitted)
 
@@ -1402,6 +1426,7 @@ class TeleopPanel(object):
         self.teleopRobotModel.setProperty('Visible', False)
         self.robotStateModel.setProperty('Visible', True)
         self.robotStateModel.setProperty('Alpha', 1.0)
+        self.robotHighlighter.dehighlight()
 
     def showTeleopModel(self):
         self.teleopRobotModel.setProperty('Visible', True)
