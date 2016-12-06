@@ -4,6 +4,8 @@ option(USE_PCL "Build with PCL." OFF)
 option(USE_LCM "Build with lcm." OFF)
 option(USE_LCMGL "Build with lcm-gl." OFF)
 option(USE_OCTOMAP "Build with octomap." OFF)
+option(USE_APRILTAGS "Build with apriltags lcm driver." OFF)
+option(USE_KINECT "Build with kinect lcm driver." OFF)
 option(USE_COLLECTIONS "Build with collections." OFF)
 option(USE_LIBBOT "Build with libbot." OFF)
 option(USE_DRAKE "Build with drake." OFF)
@@ -14,8 +16,10 @@ option(USE_SYSTEM_EIGEN "Use system version of eigen.  If off, eigen will be bui
 option(USE_SYSTEM_LCM "Use system version of lcm.  If off, lcm will be built." OFF)
 option(USE_SYSTEM_LIBBOT "Use system version of libbot.  If off, libbot will be built." OFF)
 
+set(DRAKE_SUPERBUILD_PREFIX_PATH "/home/pat/source/drake/drake/build/install")
+
 set(default_cmake_args
-  "-DCMAKE_PREFIX_PATH:PATH=${install_prefix};${CMAKE_PREFIX_PATH}"
+  "-DCMAKE_PREFIX_PATH:PATH=${install_prefix};${DRAKE_SUPERBUILD_PREFIX_PATH};${CMAKE_PREFIX_PATH}"
   "-DCMAKE_INSTALL_PREFIX:PATH=${install_prefix}"
   "-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}"
   "-DBUILD_SHARED_LIBS:BOOL=ON"
@@ -205,6 +209,86 @@ if(USE_STANDALONE_LCMGL)
     )
 
   set(lcmgl_depends bot-lcmgl)
+
+endif()
+
+###############################################################################
+# apriltags
+
+if(USE_APRILTAGS)
+
+  #ExternalProject_Add(kinect
+  #  GIT_REPOSITORY https://github.com/openhumanoids/kinect.git
+  #  GIT_TAG 3e94f58
+  #  CMAKE_CACHE_ARGS
+  #    ${default_cmake_args}
+  #  DEPENDS
+  #    ${lcm_depends} ${libbot_depends}
+  #  )
+
+  ExternalProject_Add(openni2-camera-lcm
+    GIT_REPOSITORY https://github.com/openhumanoids/openni2-camera-lcm
+    GIT_TAG master
+    CMAKE_CACHE_ARGS
+      ${default_cmake_args}
+
+    #DEPENDS
+    #  ${lcm_depends}
+    )
+
+
+
+  ExternalProject_Add(apriltags
+    GIT_REPOSITORY https://github.com/psiorx/apriltags-pod.git
+    GIT_TAG ed2972f
+    CMAKE_CACHE_ARGS
+      ${default_cmake_args}
+    )
+
+  ExternalProject_Add(apriltags_driver
+    GIT_REPOSITORY https://github.com/patmarion/apriltags_driver.git
+    GIT_TAG d13fed4
+    CMAKE_CACHE_ARGS
+      ${default_cmake_args}
+    )
+
+  set(apriltags_depends apriltags)
+
+
+
+if(0)
+
+
+# This one is actually a pod, so set it up to build as one
+ExternalProject_Add(drc_core_utils
+	PREFIX ${CMAKE_BINARY_DIR}
+	CMAKE_CACHE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR} -DLCM_INCLUDE_DIRS=${CMAKE_BINARY_DIR}/include/lcmtypes
+	SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/drc_core_utils
+	UPDATE_COMMAND ""
+	INSTALL_DIR ${CMAKE_BINARY_DIR}
+	INSTALL_COMMAND make install
+	DEPENDS drake)
+
+# This one is actually a pod, so set it up to build as one
+ExternalProject_Add(apriltags
+	PREFIX ${CMAKE_BINARY_DIR}
+	CMAKE_CACHE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR} -DLCM_INCLUDE_DIRS=${CMAKE_BINARY_DIR}/include/lcmtypes
+	SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/apriltags
+	UPDATE_COMMAND ""
+	INSTALL_DIR ${CMAKE_BINARY_DIR}
+	INSTALL_COMMAND make install
+	DEPENDS drake)
+
+# This one is actually a pod, so set it up to build as one
+ExternalProject_Add(apriltags_driver
+	PREFIX ${CMAKE_BINARY_DIR}
+	CMAKE_CACHE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR} -DLCM_INCLUDE_DIRS=${CMAKE_BINARY_DIR}/include/lcmtypes
+	SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/apriltags_driver
+	UPDATE_COMMAND ""
+	INSTALL_DIR ${CMAKE_BINARY_DIR}
+	INSTALL_COMMAND make install
+	DEPENDS drake apriltags drc_core_utils)
+endif()
 
 endif()
 

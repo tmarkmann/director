@@ -175,7 +175,7 @@ if (USE_LCM)
 
 endif()
 
-if (USE_DRC)
+if (TRUE)
 
   find_package(LibBot REQUIRED)
   include_directories(${LIBBOT_INCLUDE_DIRS})
@@ -183,18 +183,23 @@ if (USE_DRC)
   find_package(PCL REQUIRED)
   include_directories(${PCL_INCLUDE_DIRS})
 
+  find_package(OpenCV REQUIRED)
+  include_directories(${OpenCV_INCLUDE_DIRS})
+
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/cv_utils)
+
   set(moc_srcs)
   qt4_wrap_cpp(moc_srcs
     ddBotImageQueue.h
-    ddKinectLCM.h
-    ddPointCloudLCM.h
+    #ddKinectLCM.h
+    #ddPointCloudLCM.h
   )
 
   list(APPEND srcs
     ${moc_srcs}
     ddBotImageQueue.cpp
-    ddKinectLCM.cpp
-    ddPointCloudLCM.cpp
+    #ddKinectLCM.cpp
+    #ddPointCloudLCM.cpp
   )
 
   list(APPEND wrap_files
@@ -204,10 +209,13 @@ if (USE_DRC)
   list (APPEND deps
     ${LIBBOT_LIBRARIES}
     ${PCL_LIBRARIES}
+    ${OpenCV_LIBS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/cv_utils/build/libcv-utils.so
   )
 
   list(APPEND pkg_deps
-    image-utils multisense_utils kinect-utils lcmtypes_kinect lcmtypes_bot2-core
+    #image-utils multisense_utils kinect-utils lcmtypes_kinect lcmtypes_bot2-core
+    lcmtypes_bot2-core
   )
 
 endif()

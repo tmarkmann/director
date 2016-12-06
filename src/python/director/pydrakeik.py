@@ -79,7 +79,7 @@ class PyDrakePlannerPublisher(plannerPublisher.PlannerPublisher):
         from director import robotstate
 
         # rescale poseTimes
-        poseTimes = np.array(poseTimes)*2.0
+        poseTimes = np.array(poseTimes)*4.0
 
         states = [robotstate.drakePoseToRobotState(pose) for pose in poses]
         for i, state in enumerate(states):

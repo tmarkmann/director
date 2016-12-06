@@ -3,6 +3,7 @@ import PythonQt
 from PythonQt import QtCore, QtGui
 from director import callbacks
 from director import drcargs
+import director
 import director.applogic as app
 import director.objectmodel as om
 import director.visualization as vis
@@ -433,6 +434,7 @@ class HandLoader(object):
 
         self.loadHandModel()
 
+        '''
         baseToHandRoot = self.getLinkToLinkTransform(self.handModel, 'plane::xy::base', handRootLink)
         robotMountToHandRoot = self.getLinkToLinkTransform(robotModel, robotMountLink, handRootLink)
         robotMountToHandLink = self.getLinkToLinkTransform(robotModel, robotMountLink, self.handLinkName)
@@ -447,10 +449,14 @@ class HandLoader(object):
 
         self.handLinkToPalm = self.getLinkToLinkTransform(robotModel, self.handLinkName, palmLink)
         self.palmToHandLink = self.handLinkToPalm.GetLinearInverse()
+        '''
 
     def getHandUrdf(self):
-        urdfBase = os.path.join(getDRCBaseDir(), 'software/models/common_components')
-        return os.path.join(urdfBase, 'hand_factory', self.handUrdf)
+        if director.getDRCBaseIsSet():
+            urdfBase = os.path.join(getDRCBaseDir(), 'software/models/common_components/hand_factory')
+        else:
+            urdfBase = drcargs.DirectorConfig.getDefaultInstance().dirname
+        return os.path.join(urdfBase, self.handUrdf)
 
     @staticmethod
     def getLinkToLinkTransform(model, linkA, linkB):
@@ -466,7 +472,6 @@ class HandLoader(object):
 
 
     def loadHandModel(self):
-
         filename = self.getHandUrdf()
         handModel = loadRobotModelFromFile(filename)
         handModel = RobotModelItem(handModel)

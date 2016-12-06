@@ -5,6 +5,9 @@ endif()
 
 find_path(DRAKE_INCLUDE_DIR drake/util/drakeUtil.h HINTS ${_include_dir_hint} DOC "Drake source directory")
 
+message("DRAKE_DIR=${DRAKE_DIR}")
+message("${_include_dir_hint}/libdrakeRBM.so")
+
 set(DRAKE_LIBRARIES)
 set(_library_var_names)
 
