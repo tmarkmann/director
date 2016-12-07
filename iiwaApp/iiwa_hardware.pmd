@@ -21,12 +21,12 @@ group "1.vision-drivers" {
 
 
   cmd "0.openni-driver" {
-    exec = "install/bin/openni2-camera-lcm";
+    exec = "$DIRECTOR_BUILD/install/bin/openni2-camera-lcm";
     host = "localhost";
   }
 
   cmd "0.apriltag-driver" {
-    exec = "install/bin/drc-apriltags-driver --quiet=true --window=false --config=tri_iiwa_apriltags.yaml";
+    exec = "$DIRECTOR_BUILD/install/bin/drc-apriltags-driver --quiet=true --window=false --config=tri_iiwa_apriltags.yaml";
     host = "localhost";
   }
 
@@ -54,12 +54,12 @@ group "3.schunk-driver" {
 }
 
 cmd "2.director-ik-app" {
-  exec = "install/bin/directorPython -m director.mainwindowapp --startup iiwaManipApp.py  --director_config $DRAKE_BASE/drake/examples/kuka_iiwa_arm/director_config.json -c iiwaManip.cfg";
+  exec = "$DIRECTOR_BUILD/install/bin/directorPython -m director.mainwindowapp --startup iiwaManipApp.py  --director_config $DRAKE_BASE/drake/examples/kuka_iiwa_arm/director_config.json -c iiwaManip.cfg";
   host = "localhost";
 }
 
 cmd "2.bot-spy" {
-  exec = "cd $DRAKE_BASE && my-bot-spy";
+  exec = "bash -c 'cd $DRAKE_BASE; ./my-bot-spy'";
   host = "localhost";
 }
 

@@ -147,5 +147,8 @@ imageManager = initImageManager()
 openniDepthPointCloud = initDepthPointCloud(imageManager, view)
 cameraView = initCameraView(imageManager)
 
-taskPanel = mytaskpanel.MyTaskPanel(robotSystem, cameraView)
-taskPanel.widget.show()
+#taskPanel = mytaskpanel.MyTaskPanel(robotSystem, cameraView)
+#taskPanel.widget.show()
+
+#robotSystem.teleopPanel.onPostureDatabaseClicked()
+robotSystem.ikPlanner.addPostureGoalListener(robotSystem.robotStateJointController)
