@@ -7,7 +7,7 @@ group "0.bot-lcm-tunnel" {
   }
 
   cmd "1.local-bot-tunnel" {
-    exec = "$DRAKE_BASE/build/install/bin/bot-lcm-tunnel 172.18.1.132";
+    exec = "$DRAKE_BASE/build/install/bin/bot-lcm-tunnel 172.18.1.50";
     host = "localhost";
   }
 
@@ -48,7 +48,7 @@ group "2.iiwa-drivers" {
 group "3.schunk-driver" {
 
   cmd "0.schunk-driver" {
-    exec = "drake-schunk-driver/build/schunk_driver";
+    exec = "LD_LIBRARY_PATH=drake-schunk-driver/build/lib drake-schunk-driver/build/schunk_driver";
     host = "iiwarobotlab";
   }
 }

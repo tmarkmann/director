@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 
 sys.path.append(os.path.join(os.environ['DRAKE_BASE'], 'build/install/lib/python2.7/dist-packages'))
 sys.path.append(os.path.join(os.environ['DRAKE_BASE'], 'build/install/lib/python2.7/site-packages'))
@@ -35,7 +36,7 @@ setTagToWorld([0.29,-0.38,-0.10], [-93,1,1.5])
 
 def onAprilTagMessage(msg, channel):
     tagToCamera = lcmframe.frameFromRigidTransformMessage(msg)
-    vis.updateFrame(tagToCamera, channel)
+    vis.updateFrame(tagToCamera, channel, visible=False)
 
     cameraToTag = tagToCamera.GetLinearInverse()
     tagToWorld = getTagToWorld()
@@ -44,9 +45,9 @@ def onAprilTagMessage(msg, channel):
     cameraToWorldMsg = lcmframe.rigidTransformMessageFromFrame(cameraToWorld)
     lcmUtils.publish('OPENNI_FRAME_LEFT_TO_LOCAL', cameraToWorldMsg)
 
-    vis.updateFrame(vtk.vtkTransform(), 'world')
-    vis.updateFrame(cameraToWorld, 'camera to world')
-    vis.updateFrame(tagToWorld, 'tag to world')
+    vis.updateFrame(vtk.vtkTransform(), 'world', visible=False)
+    vis.updateFrame(cameraToWorld, 'camera to world', visible=False)
+    vis.updateFrame(tagToWorld, 'tag to world', visible=False)
 
 
 lcmUtils.addSubscriber('APRIL_TAG_0218_TO_CAMERA_LEFT', lcmbotcore.rigid_transform_t, onAprilTagMessage, callbackNeedsChannel=True)
@@ -121,15 +122,19 @@ def sendGripperCommand(targetPositionMM, force):
 def gripperOpen():
     sendGripperCommand(105, 40)
 
-
 def gripperClose():
-    sendGripperCommand(7, 40)
+    sendGripperCommand(15, 40)
 
+
+def onOpenTaskPanel():
+    taskPanel.widget.show()
+    taskPanel.widget.raise_()
 
 def setupToolbar():
     toolBar = applogic.findToolBar('Main Toolbar')
-    app.app.addToolBarAction(toolBar, 'Gripper Open', icon='', callback=gripperOpen)
-    app.app.addToolBarAction(toolBar, 'Gripper Close', icon='', callback=gripperClose)
+    app.addToolBarAction(toolBar, 'Gripper Open', icon='', callback=gripperOpen)
+    app.addToolBarAction(toolBar, 'Gripper Close', icon='', callback=gripperClose)
+    app.addToolBarAction(toolBar, 'Task Panel', icon='', callback=onOpenTaskPanel)
 
 
 ##############################################
@@ -141,13 +146,15 @@ app.addWidgetToDock(robotSystem.playbackPanel.widget, QtCore.Qt.BottomDockWidget
 
 applogic.resetCamera(viewDirection=[-1,0,0], view=view)
 
-
+setupToolbar()
 
 imageManager = initImageManager()
 openniDepthPointCloud = initDepthPointCloud(imageManager, view)
 cameraView = initCameraView(imageManager)
 
-#taskPanel = mytaskpanel.MyTaskPanel(robotSystem, cameraView)
+taskPanel = mytaskpanel.MyTaskPanel(robotSystem, cameraView)
+taskPanel.planner.openGripperFunc = gripperOpen
+taskPanel.planner.closeGripperFunc = gripperClose
 #taskPanel.widget.show()
 
 #robotSystem.teleopPanel.onPostureDatabaseClicked()

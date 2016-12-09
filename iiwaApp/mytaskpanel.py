@@ -19,6 +19,8 @@ import sys
 import numpy as np
 from PythonQt import QtCore, QtGui
 
+import iiwaplanning
+
 
 class MyPlanner(object):
 
@@ -27,11 +29,31 @@ class MyPlanner(object):
         self.robotModel = robotSystem.robotStateModel
         self.ikPlanner = robotSystem.ikPlanner
 
-    def onTestOne(self):
-        print 'one'
+    def reloadModule(self):
+        import imp
+        imp.reload(iiwaplanning)
 
-    def onTestTwo(self):
-        print 'two'
+    def fitObject(self):
+        iiwaplanning.fitObjectOnSupport()
+        iiwaplanning.addGraspFrames()
+
+    def planGrasp(self):
+        iiwaplanning.planReachGoal('grasp to world')
+
+    def planPreGrasp(self):
+        iiwaplanning.planReachGoal('pregrasp to world')
+
+    def commitManipPlan(self):
+        self.robotSystem.manipPlanner.commitManipPlan(self.robotSystem.ikPlanner.lastManipPlan)
+
+    def openGripper(self):
+        self.openGripperFunc()
+
+    def closeGripper(self):
+        self.closeGripperFunc()
+
+    def planToNominal(self):
+        iiwaplanning.planNominalPosture()
 
 
 class ImageFitter(ImageBasedAffordanceFit):
@@ -46,11 +68,16 @@ class ImageFitter(ImageBasedAffordanceFit):
         return obj.polyData if obj else vtk.vtkPolyData()
 
     def fit(self, polyData, points):
+        iiwaplanning.fitSupport(pickPoint=points[0])
+        return
 
 
         pickPoint = points[0]
         t = vtk.vtkTransform()
         t.Translate(pickPoint)
+
+        print 'pick point:', pickPoint
+        print 'crop'
 
         polyData = segmentation.cropToBox(polyData, t, [0.3,0.3,0.5])
 
@@ -74,6 +101,7 @@ class ImageFitter(ImageBasedAffordanceFit):
         hueRange = [0.12, 0.14]
         valueRange = [0.5, 1.0]
 
+        print 'thresh'
         points = segmentation.thresholdPoints(segmentation.thresholdPoints(polyData, 'hue', hueRange), 'value', valueRange)
         #points = segmentation.extractLargestCluster(points,  minClusterSize=10, clusterTolerance=0.02)
 
@@ -90,19 +118,25 @@ class ImageFitter(ImageBasedAffordanceFit):
         t = vtk.vtkTransform()
         t.Translate(pickPoint)
 
+        print 'crop2'
         polyData = segmentation.cropToBox(polyData, t, [0.15,0.15,0.4])
 
         vis.updatePolyData(polyData, 'object points', colorByName='rgb_colors', visible=False)
 
-        cluster = segmentation.makePolyDataFields(polyData)
-        vis.showClusterObjects([cluster], parent='segmentation')
+        if polyData.GetNumberOfPoints() > 5:
+            print 'make fields'
+            cluster = segmentation.makePolyDataFields(polyData)
+            vis.showClusterObjects([cluster], parent='segmentation')
 
+        print 'done'
 
 class MyTaskPanel(TaskUserPanel):
 
     def __init__(self, robotSystem, imageView):
 
         TaskUserPanel.__init__(self, windowTitle='Task Panel')
+
+        iiwaplanning.init(robotSystem)
 
         self.planner = MyPlanner(robotSystem)
         self.fitter = ImageFitter(self.planner, imageView)
@@ -114,9 +148,19 @@ class MyTaskPanel(TaskUserPanel):
 
     def addButtons(self):
 
-        self.addManualButton('test one', self.planner.onTestOne)
-        self.addManualButton('test two', self.planner.onTestTwo)
+        self.addManualButton('reload module', self.planner.reloadModule)
         self.addManualSpacer()
+        self.addManualButton('fit support', iiwaplanning.fitSupport)
+        self.addManualButton('fit object', iiwaplanning.fitObjectOnSupport)
+        self.addManualButton('add grasp frames', iiwaplanning.addGraspFrames)
+        self.addManualButton('plan pregrasp', self.planner.planPreGrasp)
+        self.addManualButton('plan grasp', self.planner.planGrasp)
+        self.addManualSpacer()
+        self.addManualButton('open gripper', self.planner.openGripper)
+        self.addManualButton('close gripper', self.planner.closeGripper)
+        self.addManualSpacer()
+        self.addManualButton('commit plan', self.planner.commitManipPlan)
+
 
     def addDefaultProperties(self):
         self.params.addProperty('Bool Property', False)
@@ -155,6 +199,35 @@ class MyTaskPanel(TaskUserPanel):
         self.taskTree.removeAllTasks()
         ##################
 
-        addFunc('Test One', self.planner.onTestOne)
-        addFunc('Test Two', self.planner.onTestTwo)
+        addFolder('reset')
+        addFunc('plan to home', self.planner.planToNominal)
+        addFunc('execute', self.planner.commitManipPlan)
+        addTask(rt.DelayTask(name='wait', delayTime=4.5))
+        addFunc('open gripper', self.planner.openGripper)
+        addTask(rt.PauseTask(name='pause'))
+
+        addFolder('fit support')
+        addTask(rt.UserPromptTask(name='user fit support', message='Please fit the support surface.'))
+
+
+        addFolder('grasp loop')
+
+        addFunc('fit object', iiwaplanning.fitObjectOnSupport)
+        addFunc('add grasp frames', iiwaplanning.addGraspFrames)
+
+        addFunc('plan pregrasp', self.planner.planPreGrasp)
+        addFunc('execute', self.planner.commitManipPlan)
+        addTask(rt.DelayTask(name='wait', delayTime=4.5))
+        addFunc('plan grasp', self.planner.planGrasp)
+        addFunc('execute', self.planner.commitManipPlan)
+        addTask(rt.DelayTask(name='wait', delayTime=4.5))
+        addFunc('close gripper', self.planner.closeGripper)
+        addTask(rt.DelayTask(name='wait', delayTime=0.25))
+
+        addFunc('plan to home', self.planner.planToNominal)
+        addFunc('execute', self.planner.commitManipPlan)
+        addTask(rt.DelayTask(name='wait', delayTime=4.5))
+        addFunc('open gripper', self.planner.openGripper)
+
+        #addFunc('Test Two', self.planner.onTestTwo)
 
