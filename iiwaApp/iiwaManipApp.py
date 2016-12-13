@@ -11,6 +11,7 @@ from director import transformUtils
 from director import robotsystem
 from director import segmentation
 from director import cameraview
+from director import pydrakeik
 
 import mytaskpanel
 
@@ -120,7 +121,7 @@ def sendGripperCommand(targetPositionMM, force):
 
 
 def gripperOpen():
-    sendGripperCommand(105, 40)
+    sendGripperCommand(100, 40)
 
 def gripperClose():
     sendGripperCommand(15, 40)
@@ -132,8 +133,8 @@ def onOpenTaskPanel():
 
 def setupToolbar():
     toolBar = applogic.findToolBar('Main Toolbar')
-    app.addToolBarAction(toolBar, 'Gripper Open', icon='', callback=gripperOpen)
-    app.addToolBarAction(toolBar, 'Gripper Close', icon='', callback=gripperClose)
+    #app.addToolBarAction(toolBar, 'Gripper Open', icon='', callback=gripperOpen)
+    #app.addToolBarAction(toolBar, 'Gripper Close', icon='', callback=gripperClose)
     app.addToolBarAction(toolBar, 'Task Panel', icon='', callback=onOpenTaskPanel)
 
 
@@ -159,3 +160,25 @@ taskPanel.planner.closeGripperFunc = gripperClose
 
 #robotSystem.teleopPanel.onPostureDatabaseClicked()
 robotSystem.ikPlanner.addPostureGoalListener(robotSystem.robotStateJointController)
+
+robotSystem.ikPlanner.getIkOptions().setProperty('Max joint degrees/s', 60)
+robotSystem.ikPlanner.getIkOptions().setProperty('Use pointwise', False)
+
+
+def showLinkFrame(name):
+    obj = vis.updateFrame(robotSystem.robotStateModel.getLinkFrame(name), name, parent='link frames')
+    obj.setProperty('Scale', 0.2)
+
+#showLinkFrame(robotSystem.ikPlanner.getHandLink())
+
+def plotPlan():
+    robotSystem.planPlayback.plotPlan(robotSystem.manipPlanner.lastManipPlan)
+
+#mytaskpanel.iiwaplanning.spawnBox()
+#mytaskpanel.iiwaplanning.addGraspFrames()
+#mytaskpanel.iiwaplanning.planReachGoal('grasp to world', interactive=False)
+
+
+#from director import framevisualization
+#panel = framevisualization.FrameVisualizationPanel(view)
+#panel.widget.show()

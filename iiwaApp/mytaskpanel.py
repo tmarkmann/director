@@ -37,6 +37,9 @@ class MyPlanner(object):
         iiwaplanning.fitObjectOnSupport()
         iiwaplanning.addGraspFrames()
 
+    def spawnObject(self):
+        iiwaplanning.spawnBox()
+
     def planGrasp(self):
         iiwaplanning.planReachGoal('grasp to world')
 
@@ -45,6 +48,12 @@ class MyPlanner(object):
 
     def commitManipPlan(self):
         self.robotSystem.manipPlanner.commitManipPlan(self.robotSystem.ikPlanner.lastManipPlan)
+
+    def waitForExecute(self):
+
+        plan = self.robotSystem.ikPlanner.lastManipPlan
+        lastPlanTime = self.robotSystem.planPlayback.getPlanElapsedTime(plan)
+        yield rt.DelayTask(delayTime=lastPlanTime + 0.1).run()
 
     def openGripper(self):
         self.openGripperFunc()
@@ -149,6 +158,7 @@ class MyTaskPanel(TaskUserPanel):
     def addButtons(self):
 
         self.addManualButton('reload module', self.planner.reloadModule)
+        self.addManualButton('spawn object', self.planner.spawnObject)
         self.addManualSpacer()
         self.addManualButton('fit support', iiwaplanning.fitSupport)
         self.addManualButton('fit object', iiwaplanning.fitObjectOnSupport)
@@ -202,7 +212,7 @@ class MyTaskPanel(TaskUserPanel):
         addFolder('reset')
         addFunc('plan to home', self.planner.planToNominal)
         addFunc('execute', self.planner.commitManipPlan)
-        addTask(rt.DelayTask(name='wait', delayTime=4.5))
+        addFunc('wait for execute', self.planner.waitForExecute)
         addFunc('open gripper', self.planner.openGripper)
         addTask(rt.PauseTask(name='pause'))
 
@@ -217,16 +227,16 @@ class MyTaskPanel(TaskUserPanel):
 
         addFunc('plan pregrasp', self.planner.planPreGrasp)
         addFunc('execute', self.planner.commitManipPlan)
-        addTask(rt.DelayTask(name='wait', delayTime=4.5))
+        addFunc('wait for execute', self.planner.waitForExecute)
         addFunc('plan grasp', self.planner.planGrasp)
         addFunc('execute', self.planner.commitManipPlan)
-        addTask(rt.DelayTask(name='wait', delayTime=4.5))
+        addFunc('wait for execute', self.planner.waitForExecute)
         addFunc('close gripper', self.planner.closeGripper)
         addTask(rt.DelayTask(name='wait', delayTime=0.25))
 
         addFunc('plan to home', self.planner.planToNominal)
         addFunc('execute', self.planner.commitManipPlan)
-        addTask(rt.DelayTask(name='wait', delayTime=4.5))
+        addFunc('wait for execute', self.planner.waitForExecute)
         addFunc('open gripper', self.planner.openGripper)
 
         #addFunc('Test Two', self.planner.onTestTwo)
