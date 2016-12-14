@@ -43,6 +43,11 @@ group "2.iiwa-drivers" {
     exec = "drake-distro/build/drake/examples/kuka_iiwa_arm/kuka_plan_runner";
     host = "iiwarobotlab";
   }
+
+  cmd "2.state-translator" {
+    exec = "$DIRECTOR_BUILD/install/bin/directorPython $DRAKE_BASE/drake/examples/kuka_iiwa_arm/kuka_iiwa_state_translator.py";
+    host = "localhost";
+  }
 }
 
 group "3.schunk-driver" {
@@ -53,13 +58,18 @@ group "3.schunk-driver" {
   }
 }
 
-cmd "2.director-ik-app" {
+cmd "4.director-ik-app" {
   exec = "$DIRECTOR_BUILD/install/bin/directorPython -m director.mainwindowapp --startup iiwaManipApp.py  --director_config $DRAKE_BASE/drake/examples/kuka_iiwa_arm/director_config.json -c iiwaManip.cfg";
   host = "localhost";
 }
 
-cmd "2.bot-spy" {
+cmd "5.bot-spy" {
   exec = "bash -c 'cd $DRAKE_BASE; ./my-bot-spy'";
+  host = "localhost";
+}
+
+cmd "6.signal-scope" {
+  exec = "$DRAKE_BASE/build/install/bin/signal-scope $DRAKE_BASE/drake/examples/kuka_iiwa_arm/kuka_iiwa_signal_scope.py ";
   host = "localhost";
 }
 
