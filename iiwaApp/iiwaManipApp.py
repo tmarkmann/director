@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import imp
 
 sys.path.append(os.path.join(os.environ['DRAKE_BASE'], 'build/install/lib/python2.7/dist-packages'))
 sys.path.append(os.path.join(os.environ['DRAKE_BASE'], 'build/install/lib/python2.7/site-packages'))
@@ -94,21 +95,20 @@ def initDepthPointCloud(imageManager, view):
     return openniDepthPointCloud
 
 
-def initCameraView(imageManager):
+def newCameraView(imageManager, channelName='OPENNI_FRAME', cameraName='OPENNI_FRAME_LEFT', viewName='OpenNI Frame'):
 
     view = PythonQt.dd.ddQVTKWidgetView()
     view.orientationMarkerWidget().Off()
     view.backgroundRenderer().SetBackground([0,0,0])
     view.backgroundRenderer().SetBackground2([0,0,0])
 
-    imageManager.queue.addCameraStream('OPENNI_FRAME', 'OPENNI_FRAME_LEFT', lcmbotcore.images_t.LEFT)
-    imageManager.addImage('OPENNI_FRAME_LEFT')
+    imageManager.queue.addCameraStream(channelName, cameraName, lcmbotcore.images_t.LEFT)
+    imageManager.addImage(cameraName)
 
-    cameraView = cameraview.CameraImageView(imageManager, 'OPENNI_FRAME_LEFT', viewName='OpenNI Frame', view=view)
+    cameraView = cameraview.CameraImageView(imageManager, cameraName, viewName=viewName, view=view)
     cameraView.eventFilterEnabled = False
     view.renderWindow().GetInteractor().SetInteractorStyle(vtk.vtkInteractorStyleImage())
 
-    #view.show()
     return cameraView
 
 
@@ -131,11 +131,20 @@ def onOpenTaskPanel():
     taskPanel.widget.show()
     taskPanel.widget.raise_()
 
+def onFitCamera():
+    import aligncameratool
+    imp.reload(aligncameratool)
+    global alignmentTool
+    alignmentTool = aligncameratool.main(robotSystem, newCameraView(imageManager))
+
+
 def setupToolbar():
     toolBar = applogic.findToolBar('Main Toolbar')
     #app.addToolBarAction(toolBar, 'Gripper Open', icon='', callback=gripperOpen)
     #app.addToolBarAction(toolBar, 'Gripper Close', icon='', callback=gripperClose)
     app.addToolBarAction(toolBar, 'Task Panel', icon='', callback=onOpenTaskPanel)
+
+    app.addToolBarAction(toolBar, 'Fit Camera', icon='', callback=onFitCamera)
 
 
 ##############################################
@@ -151,7 +160,7 @@ setupToolbar()
 
 imageManager = initImageManager()
 openniDepthPointCloud = initDepthPointCloud(imageManager, view)
-cameraView = initCameraView(imageManager)
+cameraView = newCameraView(imageManager)
 
 taskPanel = mytaskpanel.MyTaskPanel(robotSystem, cameraView)
 taskPanel.planner.openGripperFunc = gripperOpen
