@@ -122,7 +122,7 @@ class TestFitCamera(object):
 
         vis.showPolyData(polyData, 'transformed pointcloud', view=self.view, colorByName='rgb_colors', visible=False)
 
-        polyData = segmentation.cropToBounds(polyData, vtk.vtkTransform(), [[-10,0.1],[-10,10],[0.15,10]])
+        polyData = segmentation.cropToBounds(polyData, vtk.vtkTransform(), [[-0.5,0.50],[-0.5,0.5],[0.13,1.5]])
         #polyData = segmentation.applyVoxelGrid(polyData, leafSize=0.01)
         #polyData = segmentation.applyEuclideanClustering(polyData, clusterTolerance=0.04)
         #polyData = segmentation.thresholdPoints(polyData, 'cluster_labels', [1,1])
