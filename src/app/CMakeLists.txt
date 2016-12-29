@@ -21,6 +21,14 @@ include_directories(${CTK_PYTHONCONSOLE_INCLUDE_DIRS})
 include_directories(${PYTHONQT_INCLUDE_DIRS})
 include_directories(${PYTHON_INCLUDE_DIRS})
 
+
+set(CVUTILS_INCLUDE_DIRS ${CMAKE_INSTALL_PREFIX}/include/cv-utils)
+set(CVUTILS_LIBRARY ${CMAKE_INSTALL_PREFIX}/lib/libcv-utils.so)
+set(CVUTILS_LIBRARIES ${CVUTILS_LIBRARY})
+
+include_directories($ENV{HOME}/kuka-dev/drake/build/install/include/lcmtypes)
+include_directories(${CVUTILS_INCLUDE_DIRS})
+
 set(decorator_file ${CMAKE_CURRENT_BINARY_DIR}/ddPythonQtDecorators.h)
 
 set(wrap_files
@@ -210,7 +218,7 @@ if (TRUE)
     ${LIBBOT_LIBRARIES}
     ${PCL_LIBRARIES}
     ${OpenCV_LIBS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/cv_utils/build/libcv-utils.so
+    ${CVUTILS_LIBRARIES}
   )
 
   list(APPEND pkg_deps

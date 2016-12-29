@@ -15,8 +15,9 @@ set(USE_EIGEN ${USE_PCL})
 option(USE_SYSTEM_EIGEN "Use system version of eigen.  If off, eigen will be built." OFF)
 option(USE_SYSTEM_LCM "Use system version of lcm.  If off, lcm will be built." OFF)
 option(USE_SYSTEM_LIBBOT "Use system version of libbot.  If off, libbot will be built." OFF)
+option(USE_SYSTEM_PCL "Use system version of pcl.  If off, pcl will be built." OFF)
 
-set(DRAKE_SUPERBUILD_PREFIX_PATH "/home/pat/source/drake/drake/build/install")
+set(DRAKE_SUPERBUILD_PREFIX_PATH "$ENV{HOME}/kuka-dev/drake/build/install")
 
 set(default_cmake_args
   "-DCMAKE_PREFIX_PATH:PATH=${install_prefix};${DRAKE_SUPERBUILD_PREFIX_PATH};${CMAKE_PREFIX_PATH}"
@@ -213,9 +214,9 @@ if(USE_STANDALONE_LCMGL)
 endif()
 
 ###############################################################################
-# apriltags
+# camera driver
 
-if(USE_APRILTAGS)
+if(USE_KINECT)
 
   #ExternalProject_Add(kinect
   #  GIT_REPOSITORY https://github.com/openhumanoids/kinect.git
@@ -237,6 +238,20 @@ if(USE_APRILTAGS)
     )
 
 
+  ExternalProject_Add(cv-utils
+    GIT_REPOSITORY https://github.com/patmarion/cv-utils
+    GIT_TAG master
+    CMAKE_CACHE_ARGS
+      ${default_cmake_args}
+
+    #DEPENDS
+    #  ${lcm_depends}
+    )
+
+endif()
+
+
+if(USE_APRILTAGS)
 
   ExternalProject_Add(apriltags
     GIT_REPOSITORY https://github.com/psiorx/apriltags-pod.git
@@ -253,42 +268,6 @@ if(USE_APRILTAGS)
     )
 
   set(apriltags_depends apriltags)
-
-
-
-if(0)
-
-
-# This one is actually a pod, so set it up to build as one
-ExternalProject_Add(drc_core_utils
-	PREFIX ${CMAKE_BINARY_DIR}
-	CMAKE_CACHE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR} -DLCM_INCLUDE_DIRS=${CMAKE_BINARY_DIR}/include/lcmtypes
-	SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/drc_core_utils
-	UPDATE_COMMAND ""
-	INSTALL_DIR ${CMAKE_BINARY_DIR}
-	INSTALL_COMMAND make install
-	DEPENDS drake)
-
-# This one is actually a pod, so set it up to build as one
-ExternalProject_Add(apriltags
-	PREFIX ${CMAKE_BINARY_DIR}
-	CMAKE_CACHE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR} -DLCM_INCLUDE_DIRS=${CMAKE_BINARY_DIR}/include/lcmtypes
-	SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/apriltags
-	UPDATE_COMMAND ""
-	INSTALL_DIR ${CMAKE_BINARY_DIR}
-	INSTALL_COMMAND make install
-	DEPENDS drake)
-
-# This one is actually a pod, so set it up to build as one
-ExternalProject_Add(apriltags_driver
-	PREFIX ${CMAKE_BINARY_DIR}
-	CMAKE_CACHE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR} -DLCM_INCLUDE_DIRS=${CMAKE_BINARY_DIR}/include/lcmtypes
-	SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/apriltags_driver
-	UPDATE_COMMAND ""
-	INSTALL_DIR ${CMAKE_BINARY_DIR}
-	INSTALL_COMMAND make install
-	DEPENDS drake apriltags drc_core_utils)
-endif()
 
 endif()
 
@@ -373,7 +352,7 @@ endif()
 ###############################################################################
 # pcl, flann
 
-if(USE_PCL)
+if(USE_PCL AND NOT USE_SYSTEM_PCL)
 
   # boost is an external dependency
   find_package(Boost REQUIRED)
@@ -459,7 +438,7 @@ ExternalProject_Add(PointCloudLibraryPlugin
     ${vtk_args}
     -DPCL_REQUIRED_VERSION:STRING=1.7.1
   DEPENDS
-    pcl
+    ${pcl_depends}
     ${vtk_depends}
   )
 
