@@ -1,0 +1,9 @@
+cd kuka-dev/director/iiwaApp/
+
+iiwaManipApp.py - director_ik_app + camera driver + task panel
+
+source setup_environment.sh
+runprocman
+runapp 
+
+put default camera transform in cfg file

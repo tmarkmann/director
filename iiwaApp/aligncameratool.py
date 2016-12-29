@@ -40,12 +40,37 @@ class ImageFitter(ImageBasedAffordanceFit):
         vis.showPolyData(d.getPolyData(), 'image pick points', view=self.parent.view, color=[1,0,0])
         self.parent.onImagePick()
 
+srcPts = np.array([[ 0.04360487,  0.22347495,  1.43900001],
+          [ 0.04224127, -0.01987825,  1.31200004],
+          [ 0.05641512, -0.18975995,  1.35399997]])
+
+targetPts = np.array([[ 0.09142129,  0.01631424,  0.10309665],
+            [ 0.06113151,  0.07473867,  0.39604918],
+            [-0.08907843,  0.02098387,  0.57288993]])
+
+'''
+result matrix:
+    -0.346176 0.0709193 0.935485 -0.00931564 
+    -0.071011 -0.996259 0.049249 0.0373456 
+    0.935478 -0.0493809 0.349917 0.357345 
+    0 0 0 1 
+'''
+
+def test():
+    computeLandmarkTransform(srcPts, targetPts)
 
 def computeLandmarkTransform(sourcePoints, targetPoints):
     '''
     Returns a vtkTransform for the transform sourceToTarget
     that can be used to transform the source points to the target.
     '''
+
+    print 'source points:'
+    for p in sourcePoints: print p
+
+    print 'target points:'
+    for p in targetPoints: print p
+
     sourcePoints = vnp.getVtkPointsFromNumpy(sourcePoints)
     targetPoints = vnp.getVtkPointsFromNumpy(targetPoints)
 
@@ -59,6 +84,10 @@ def computeLandmarkTransform(sourcePoints, targetPoints):
     t = vtk.vtkTransform()
     t.PostMultiply()
     t.SetMatrix(mat)
+
+    print 'landmark transform matrix:'
+    print mat
+
     return t
 
 
@@ -117,17 +146,42 @@ class TestFitCamera(object):
         if None in [self.meshPoints, self.imageFitter.points]:
             return
 
-        t1 = computeLandmarkTransform(self.imageFitter.points, self.meshPoints)
+        srcPts = []
+        targetPts = []
+        print self.imageFitter.points
+        print self.meshPoints
+
+        for p in self.imageFitter.points:
+            srcPts.append(list(p))
+        for p in self.meshPoints:
+            targetPts.append(list(p))
+
+
+        t1 = computeLandmarkTransform(np.array(srcPts), np.array(targetPts))
+        t1 = computeLandmarkTransform(np.array(srcPts), np.array(targetPts))
+
+        d = DebugData()
+        for p in self.imageFitter.points:
+            d.addSphere(p, radius=0.01)
+        vis.showPolyData(filterUtils.transformPolyData(d.getPolyData(), t1), 'transformed image points', view=self.view, color=[0,0,1])
+
         polyData = filterUtils.transformPolyData(self.imageFitter.getPointCloud(), t1)
 
         vis.showPolyData(polyData, 'transformed pointcloud', view=self.view, colorByName='rgb_colors', visible=False)
 
-        polyData = segmentation.cropToBounds(polyData, vtk.vtkTransform(), [[-0.5,0.50],[-0.5,0.5],[0.13,1.5]])
+
+        polyData = segmentation.cropToBounds(polyData, vtk.vtkTransform(), [[-0.3,0.30],[-0.3,0.3],[0.13,1.5]])
         #polyData = segmentation.applyVoxelGrid(polyData, leafSize=0.01)
         #polyData = segmentation.applyEuclideanClustering(polyData, clusterTolerance=0.04)
         #polyData = segmentation.thresholdPoints(polyData, 'cluster_labels', [1,1])
 
         vis.showPolyData(polyData, 'filtered points for icp', color=[0,1,0], view=self.view, visible=False)
+
+        if not polyData.GetNumberOfPoints():
+            print 'error, filtered points for ICP are empty.'
+            return
+        print 'number of filtered points for ICP:', polyData.GetNumberOfPoints()
+
 
         t2 = segmentation.applyICP(polyData, self.robotMesh)
 
