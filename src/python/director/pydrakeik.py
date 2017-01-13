@@ -208,20 +208,11 @@ class PyDrakeIkServer(object):
             packageMap[os.path.basename(path)] = path
 
         urdfString = open(urdfFile, 'r').read()
+
         baseDir = str(os.path.dirname(urdfFile))
-        floatingBaseType = pydrake.rbtree.kRollPitchYaw
-        weldFrame = None
 
         rigidBodyTree = pydrake.rbtree.RigidBodyTree()
-
-        pydrake.rbtree.AddModelInstanceFromUrdfStringSearchingInRosPackages(
-          urdfString,
-          packageMap,
-          baseDir,
-          floatingBaseType,
-          weldFrame,
-          rigidBodyTree)
-
+        rigidBodyTree.addRobotFromURDFString(urdfString, packageMap, baseDir)
         return rigidBodyTree
 
     def makeIkOptions(self, fields):
