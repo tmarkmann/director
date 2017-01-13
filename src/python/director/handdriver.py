@@ -19,6 +19,7 @@ from director import robotstate
 import irobothand as lcmirobot
 import robotiqhand as lcmrobotiq
 
+raise Exception
 
 class IRobotHandDriver(object):
 

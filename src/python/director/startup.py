@@ -59,8 +59,6 @@ from director import lcmloggerwidget
 from director import lcmgl
 from director import lcmoctomap
 from director import lcmcollections
-from director import atlasdriver
-from director import atlasdriverpanel
 from director import multisensepanel
 from director import navigationpanel
 from director import handcontrolpanel
@@ -74,7 +72,6 @@ from director import coursemodel
 
 from director import copmonitor
 from director import robotplanlistener
-from director import handdriver
 from director import planplayback
 from director import playbackpanel
 from director import screengrabberpanel
@@ -142,10 +139,8 @@ usePerception = True
 useGrid = True
 useSpreadsheet = True
 useFootsteps = True
-useHands = True
 usePlanning = True
-useHumanoidDRCDemos = True
-useAtlasDriver = True
+useHumanoidDRCDemos = False
 useLCMGL = True
 useOctomap = True
 useCollections = True
@@ -209,7 +204,11 @@ if useIk:
     startIkServer()
 
 
-if useAtlasDriver:
+if options.useAtlasDriver:
+
+    from director import atlasdriver
+    from director import atlasdriverpanel
+
     atlasdriver.systemStatus.outputConsole = app.getOutputConsole()
     atlasdriverpanel.init(atlasDriver)
 else:
@@ -260,7 +259,7 @@ viewBackgroundLightHandler = viewcolors.ViewBackgroundLightHandler(viewOptions, 
 if not useLightColorScheme:
     viewBackgroundLightHandler.action.trigger()
 
-if useHands:
+if options.useHandDrivers:
     handcontrolpanel.init(lHandDriver, rHandDriver, robotStateModel, robotStateJointController, view)
 else:
     app.removeToolbarMacro('ActionHandControlPanel')
@@ -449,11 +448,11 @@ if usePlanning:
 
     if useHumanoidDRCDemos:
         debrisDemo = debrisdemo.DebrisPlannerDemo(robotStateModel, robotStateJointController, playbackRobotModel,
-                        ikPlanner, manipPlanner, atlasdriver.driver, lHandDriver,
+                        ikPlanner, manipPlanner, atlasDriver, lHandDriver,
                         perception.multisenseDriver, refitBlocks)
 
         drillDemo = drilldemo.DrillPlannerDemo(robotStateModel, playbackRobotModel, teleopRobotModel, footstepsDriver, manipPlanner, ikPlanner,
-                        lHandDriver, rHandDriver, atlasdriver.driver, perception.multisenseDriver,
+                        lHandDriver, rHandDriver, atlasDriver, perception.multisenseDriver,
                         fitDrillMultisense, robotStateJointController,
                         playPlans, teleopPanel.showPose, cameraview, segmentationpanel)
         drillTaskPanel = drilldemo.DrillTaskPanel(drillDemo)
@@ -471,17 +470,17 @@ if usePlanning:
             drivingPlannerPanel = drivingplanner.DrivingPlannerPanel(robotSystem)
 
         walkingDemo = walkingtestdemo.walkingTestDemo(robotStateModel, playbackRobotModel, teleopRobotModel, footstepsDriver, manipPlanner, ikPlanner,
-                        lHandDriver, rHandDriver, atlasdriver.driver, perception.multisenseDriver,
+                        lHandDriver, rHandDriver, atlasDriver, perception.multisenseDriver,
                         robotStateJointController,
                         playPlans, showPose)
 
         bihandedDemo = bihandeddemo.BihandedPlannerDemo(robotStateModel, playbackRobotModel, teleopRobotModel, footstepsDriver, manipPlanner, ikPlanner,
-                        lHandDriver, rHandDriver, atlasdriver.driver, perception.multisenseDriver,
+                        lHandDriver, rHandDriver, atlasDriver, perception.multisenseDriver,
                         fitDrillMultisense, robotStateJointController,
                         playPlans, showPose, cameraview, segmentationpanel)
 
         doorDemo = doordemo.DoorDemo(robotStateModel, footstepsDriver, manipPlanner, ikPlanner,
-                                          lHandDriver, rHandDriver, atlasdriver.driver, perception.multisenseDriver,
+                                          lHandDriver, rHandDriver, atlasDriver, perception.multisenseDriver,
                                           fitDrillMultisense, robotStateJointController,
                                           playPlans, showPose)
         doorTaskPanel = doordemo.DoorTaskPanel(doorDemo)
@@ -531,7 +530,7 @@ if useLoggingWidget:
 
 
 
-if useControllerRate:
+if options.useAtlasDriver and useControllerRate:
 
     class ControllerRateLabel(object):
         '''

@@ -11,6 +11,8 @@ class RobotSystemFactory(ComponentFactory):
         '''
         options.useConvexHullModel = False
         options.useRobotLinkSelector = False
+        options.useHandDrivers = False
+        options.useAtlasDriver = False
 
     def addComponents(self, componentGraph):
 

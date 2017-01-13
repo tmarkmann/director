@@ -22,6 +22,8 @@ import atlas
 from pronto.indexed_measurement_t import indexed_measurement_t
 
 
+raise Exception
+
 class SystemStatusListener(object):
 
     def __init__(self, outputConsole):
