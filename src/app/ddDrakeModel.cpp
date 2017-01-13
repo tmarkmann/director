@@ -2,8 +2,7 @@
 #include "ddSharedPtr.h"
 
 #include <drake/multibody/joints/floating_base_types.h>
-#include <drake/multibody/parsers/package_map.h>
-#include <drake/multibody/parsers/urdf_parser.h>
+#include <drake/multibody/parser_urdf.h>
 #include <drake/multibody/rigid_body_tree.h>
 #include <drake/multibody/shapes/geometry.h>
 
@@ -87,7 +86,7 @@ namespace
 
 const int GRAY_DEFAULT = 190;
 
-drake::parsers::PackageMap PackageSearchPaths;
+std::map<std::string, std::string> PackageSearchPaths;
 
 int feq (double a, double b)
 {
@@ -902,8 +901,7 @@ void ddDrakeModel::setJointPositions(const QVector<double>& jointPositions)
 
   this->Internal->JointPositions = jointPositions;
 
-  model->cache = std::make_shared<KinematicsCache<double> >(
-      model->CreateKinematicsCache());
+  model->cache = std::make_shared<KinematicsCache<double> >(model->bodies);
   model->cache->initialize(q);
   model->doKinematics(*model->cache);
   model->updateModel();
@@ -1343,18 +1341,18 @@ bool ddDrakeModel::visible() const
 void ddDrakeModel::addPackageSearchPath(const QString& searchPath)
 {
   std::string packageName = QDir(searchPath).dirName().toAscii().data();
-  if (!PackageSearchPaths.Contains(packageName))
+  if (PackageSearchPaths.count(packageName) == 0)
   {
-    PackageSearchPaths.Add(packageName, searchPath.toAscii().data());
+    PackageSearchPaths[packageName] = searchPath.toAscii().data();
   }
 }
 
 //-----------------------------------------------------------------------------
 QString ddDrakeModel::findPackageDirectory(const QString& packageName)
 {
-  const std::string package_name = packageName.toAscii().data();
-  if (PackageSearchPaths.Contains(package_name)) {
-    return QString::fromStdString(PackageSearchPaths.GetPath(package_name));
+  auto packageDirIter = PackageSearchPaths.find(packageName.toAscii().data());
+  if (packageDirIter != PackageSearchPaths.end()) {
+    return QString::fromStdString(packageDirIter->second);
   } else {
     return QString();
   }
