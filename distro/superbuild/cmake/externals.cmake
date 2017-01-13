@@ -17,7 +17,14 @@ option(USE_SYSTEM_LCM "Use system version of lcm.  If off, lcm will be built." O
 option(USE_SYSTEM_LIBBOT "Use system version of libbot.  If off, libbot will be built." OFF)
 option(USE_SYSTEM_PCL "Use system version of pcl.  If off, pcl will be built." OFF)
 
-set(DRAKE_SUPERBUILD_PREFIX_PATH "$ENV{HOME}/kuka-dev/drake/build/install")
+if(USE_DRAKE)
+  set(DRAKE_SOURCE_DIR CACHE PATH "")
+  set(DRAKE_SUPERBUILD_PREFIX_PATH "${DRAKE_SOURCE_DIR}/build/install")
+  if(NOT EXISTS "${DRAKE_SUPERBUILD_PREFIX_PATH}")
+    set(DRAKE_SUPERBUILD_PREFIX_PATH "")
+    #message(SEND_ERROR "Please set DRAKE_SOURCE_DIR.")
+  endif()
+endif()
 
 set(default_cmake_args
   "-DCMAKE_PREFIX_PATH:PATH=${install_prefix};${DRAKE_SUPERBUILD_PREFIX_PATH};${CMAKE_PREFIX_PATH}"
@@ -232,9 +239,8 @@ if(USE_KINECT)
     GIT_TAG master
     CMAKE_CACHE_ARGS
       ${default_cmake_args}
-
-    #DEPENDS
-    #  ${lcm_depends}
+    DEPENDS
+      ${lcm_depends}
     )
 
 
@@ -243,10 +249,11 @@ if(USE_KINECT)
     GIT_TAG master
     CMAKE_CACHE_ARGS
       ${default_cmake_args}
-
-    #DEPENDS
-    #  ${lcm_depends}
+    DEPENDS
+      ${lcm_depends}
     )
+
+  set(cvutils_depends cv-utils)
 
 endif()
 
@@ -475,6 +482,7 @@ ExternalProject_Add(director
     ${eigen_depends}
     ${lcm_depends}
     ${libbot_depends}
+    ${cvutils_depends}
     PythonQt
     ctkPythonConsole
     QtPropertyBrowser
