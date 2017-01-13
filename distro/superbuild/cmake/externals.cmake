@@ -113,7 +113,7 @@ if (USE_LCM AND NOT USE_SYSTEM_LCM)
 
   ExternalProject_Add(lcm
     GIT_REPOSITORY https://github.com/lcm-proj/lcm.git
-    GIT_TAG a8cda6a6
+    GIT_TAG 89f26a4
     ${cmake3_args}
     CMAKE_CACHE_ARGS
       ${default_cmake_args}
@@ -136,8 +136,8 @@ if(USE_LIBBOT AND NOT USE_SYSTEM_LIBBOT)
   endif()
 
   ExternalProject_Add(libbot
-    GIT_REPOSITORY https://github.com/RobotLocomotion/libbot.git
-    GIT_TAG 2cfd369
+    GIT_REPOSITORY https://github.com/RobotLocomotion/libbot2.git
+    GIT_TAG bc73f60
     CMAKE_CACHE_ARGS
       ${default_cmake_args}
       -DWITH_BOT_VIS:BOOL=OFF
@@ -154,7 +154,7 @@ endif()
 ###############################################################################
 # lcm message types repos
 
-if (USE_LCM)
+if (USE_LCM AND NOT USE_SYSTEM_LIBBOT)
 
   ExternalProject_Add(bot_core_lcmtypes
     GIT_REPOSITORY https://github.com/openhumanoids/bot_core_lcmtypes
@@ -220,63 +220,6 @@ if(USE_STANDALONE_LCMGL)
 
 endif()
 
-###############################################################################
-# camera driver
-
-if(USE_KINECT)
-
-  #ExternalProject_Add(kinect
-  #  GIT_REPOSITORY https://github.com/openhumanoids/kinect.git
-  #  GIT_TAG 3e94f58
-  #  CMAKE_CACHE_ARGS
-  #    ${default_cmake_args}
-  #  DEPENDS
-  #    ${lcm_depends} ${libbot_depends}
-  #  )
-
-  ExternalProject_Add(openni2-camera-lcm
-    GIT_REPOSITORY https://github.com/openhumanoids/openni2-camera-lcm
-    GIT_TAG master
-    CMAKE_CACHE_ARGS
-      ${default_cmake_args}
-    DEPENDS
-      ${lcm_depends}
-    )
-
-
-  ExternalProject_Add(cv-utils
-    GIT_REPOSITORY https://github.com/patmarion/cv-utils
-    GIT_TAG master
-    CMAKE_CACHE_ARGS
-      ${default_cmake_args}
-    DEPENDS
-      ${lcm_depends}
-    )
-
-  set(cvutils_depends cv-utils)
-
-endif()
-
-
-if(USE_APRILTAGS)
-
-  ExternalProject_Add(apriltags
-    GIT_REPOSITORY https://github.com/psiorx/apriltags-pod.git
-    GIT_TAG ed2972f
-    CMAKE_CACHE_ARGS
-      ${default_cmake_args}
-    )
-
-  ExternalProject_Add(apriltags_driver
-    GIT_REPOSITORY https://github.com/patmarion/apriltags_driver.git
-    GIT_TAG d13fed4
-    CMAKE_CACHE_ARGS
-      ${default_cmake_args}
-    )
-
-  set(apriltags_depends apriltags)
-
-endif()
 
 ###############################################################################
 # PythonQt
@@ -448,6 +391,70 @@ ExternalProject_Add(PointCloudLibraryPlugin
     ${pcl_depends}
     ${vtk_depends}
   )
+
+endif()
+
+
+###############################################################################
+# camera driver
+
+if(USE_KINECT)
+
+  ExternalProject_Add(openni2-camera-lcm
+    GIT_REPOSITORY https://github.com/openhumanoids/openni2-camera-lcm
+    GIT_TAG master
+    CMAKE_CACHE_ARGS
+      ${default_cmake_args}
+    DEPENDS
+      ${lcm_depends}
+    )
+
+
+  ExternalProject_Add(cv-utils
+    GIT_REPOSITORY https://github.com/patmarion/cv-utils
+    GIT_TAG 1d1465d
+    CMAKE_CACHE_ARGS
+      ${default_cmake_args}
+    DEPENDS
+      ${lcm_depends} ${pcl_depends}
+    )
+
+  #ExternalProject_Add(kinect
+  #  GIT_REPOSITORY https://github.com/openhumanoids/kinect.git
+  #  GIT_TAG 3e94f58
+  #  CMAKE_CACHE_ARGS
+  #    ${default_cmake_args}
+  #  DEPENDS
+  #    ${lcm_depends} ${libbot_depends}
+  #  )
+
+  set(cvutils_depends cv-utils)
+
+endif()
+
+
+###############################################################################
+# apriltags
+
+if(USE_APRILTAGS)
+
+  ExternalProject_Add(apriltags
+    GIT_REPOSITORY https://github.com/psiorx/apriltags-pod.git
+    GIT_TAG ed2972f
+    CMAKE_CACHE_ARGS
+      ${default_cmake_args}
+    )
+
+  ExternalProject_Add(apriltags_driver
+    GIT_REPOSITORY https://github.com/patmarion/apriltags_driver.git
+    GIT_TAG 3d84ae4
+    CMAKE_CACHE_ARGS
+      ${default_cmake_args}
+    DEPENDS
+      ${lcm_depends}
+    )
+
+  set(apriltags_depends apriltags)
 
 endif()
 
