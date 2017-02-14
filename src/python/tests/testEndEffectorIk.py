@@ -1,3 +1,5 @@
+import pydrake.solvers.ik
+
 import director
 from director import robotsystem
 from director.consoleapp import ConsoleApp
