@@ -98,6 +98,7 @@ class TestFitCamera(object):
 
         self.robotMesh = vtk.vtkPolyData()
         robotSystem.robotStateModel.model.getModelMesh(self.robotMesh)
+        self.robotBaseFrame = robotSystem.robotStateModel.getLinkFrame('base')
 
         self.view = PythonQt.dd.ddQVTKWidgetView()
         vis.showPolyData(self.robotMesh, 'robot mesh', view=self.view)
@@ -140,15 +141,15 @@ class TestFitCamera(object):
         if self.meshPoints is None or self.imagePoints is None:
             return
 
-
-
         t1 = computeLandmarkTransform(self.imagePoints, self.meshPoints)
         polyData = filterUtils.transformPolyData(self.imageFitter.getPointCloud(), t1)
 
         vis.showPolyData(polyData, 'transformed pointcloud', view=self.view, colorByName='rgb_colors', visible=False)
         vis.showPolyData(filterUtils.transformPolyData(makeDebugPoints(self.imagePoints), t1), 'transformed image pick points', color=[0,0,1], view=self.view)
 
-        polyData = segmentation.cropToBounds(polyData, vtk.vtkTransform(), [[-0.5,0.50],[-0.3,0.3],[0.15,1.5]])
+        boxBounds = [[-0.5,0.50], [-0.3,0.3], [0.15,1.5]] #xmin,xmax,  ymin,ymax,  zmin,zmax
+
+        polyData = segmentation.cropToBounds(polyData, self.robotBaseFrame, [[-0.5,0.50],[-0.3,0.3],[0.15,1.5]])
 
         #arrayName = 'distance_to_mesh'
         #dists = computePointToSurfaceDistance(polyData, self.robotMesh)
@@ -160,7 +161,7 @@ class TestFitCamera(object):
         #polyData = segmentation.applyEuclideanClustering(polyData, clusterTolerance=0.04)
         #polyData = segmentation.thresholdPoints(polyData, 'cluster_labels', [1,1])
 
-        vis.showPolyData(polyData, 'filtered points for icp', color=[0,1,0], view=self.view, visible=False)
+        vis.showPolyData(polyData, 'filtered points for icp', color=[0,1,0], view=self.view, visible=True)
 
         t2 = segmentation.applyICP(polyData, self.robotMesh)
 

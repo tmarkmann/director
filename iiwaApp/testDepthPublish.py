@@ -1,5 +1,7 @@
 from director import depthscanner
 from director import ioUtils
+from director import lcmframe
+from director import lcmUtils
 from director import cameraview
 from director import vtkAll as vtk
 from director.shallowCopy import shallowCopy
@@ -38,22 +40,37 @@ def testReadAndPublish(channel, imageManager):
     imageManager.queue.publishRGBDImagesMessage(channel, im, imDepth, getUtime())
 
 
-def publishDepthScanner(channel, imageManager, depthScanner):
+def publishDepthScanner(channel, imageManager, depthScanner, utime):
     colorImage = depthScanner.getColorBufferImage()
     depthImage = depthScanner.getDepthImage()
 
     colorImage = flipImage(colorImage)
     depthImage = flipImage(depthImage)
 
-    imageManager.queue.publishRGBImageMessage('TEST_IMAGE', colorImage, getUtime())
-    imageManager.queue.publishRGBDImagesMessage(channel, colorImage, depthImage, getUtime())
+    #imageManager.queue.publishRGBImageMessage('TEST_IMAGE', colorImage, utime)
+    imageManager.queue.publishRGBDImagesMessage(channel, colorImage, depthImage, utime)
+
+
+def publishCameraPose(camera, channel, utime):
+
+    lookAt = transformUtils.getLookAtTransform(camera.GetFocalPoint(), camera.GetPosition(), camera.GetViewUp())
+    xaxis, yaxis, zaxis = transformUtils.getAxesFromTransform(lookAt)
+    xaxis, yaxis, zaxis = -yaxis, -zaxis, xaxis
+    cameraToWorld = transformUtils.getTransformFromAxesAndOrigin(xaxis, yaxis, zaxis, camera.GetPosition())
+
+
+    cameraToWorldMsg = lcmframe.rigidTransformMessageFromFrame(cameraToWorld)
+    cameraToWorldMsg.utime = utime
+    lcmUtils.publish(channel, cameraToWorldMsg)
 
 
 class MyDepthScanner(depthscanner.DepthScanner):
 
     def update(self):
         depthscanner.DepthScanner.update(self)
-        publishDepthScanner('OPENNI_FRAME', imageManager, self)
+        utime = getUtime()
+        publishCameraPose(view.camera(), 'OPENNI_FRAME_LEFT_TO_LOCAL', utime)
+        publishDepthScanner('OPENNI_FRAME', imageManager, self, utime)
 
 
 def focalLengthToViewAngle(focalLength, imageHeight):
@@ -85,10 +102,16 @@ def setCameraIntrinsics(view, principalX, principalY, focalLength):
 
 
 def setCameraInstrinsicsAsus(view):
+    # momap default
+    #principalX = 319.5
+    #principalY = 239.5
+    #focalLength = 570.3422241210938
 
-    principalX = 319.5
-    principalY = 239.5
-    focalLength = 570.3422241210938
+
+    principalX = 320.0
+    principalY = 267.0
+    focalLength = 528.01442863461716
+
     setCameraIntrinsics(view, principalX, principalY, focalLength)
 
 
