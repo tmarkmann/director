@@ -64,9 +64,31 @@ def publishCameraPose(camera, channel, utime):
     lcmUtils.publish(channel, cameraToWorldMsg)
 
 
+def syncCamera(camera):
+    obj = om.findObjectByName('iiwa_link_7 geometry data')
+    if not obj:
+        return
+
+    linkToWorld = obj.actor.GetUserTransform()
+    if not linkToWorld:
+        return
+
+    cameraToLink = transformUtils.frameFromPositionAndRPY([0.0, 0.0, 0.3], [0, 0, 0])
+    cameraToWorld = transformUtils.concatenateTransforms([cameraToLink, linkToWorld])
+
+    origin = np.array(cameraToWorld.GetPosition())
+    axes = transformUtils.getAxesFromTransform(cameraToWorld)
+
+    camera.SetPosition(origin)
+    camera.SetFocalPoint(origin+axes[2])
+    camera.SetViewUp(-axes[0])
+
+
+
 class MyDepthScanner(depthscanner.DepthScanner):
 
     def update(self):
+        #syncCamera(view.camera())
         depthscanner.DepthScanner.update(self)
         utime = getUtime()
         publishCameraPose(view.camera(), 'OPENNI_FRAME_LEFT_TO_LOCAL', utime)
