@@ -839,7 +839,7 @@ class IKPlanner(object):
 
 
     def computeDatabasePosturePlan(self, startPose, poseGroup, poseName, side=None):
-        endPose = self.getMergedPostureFromDatabase(startPose, poseGroup, poseName)
+        endPose = self.getMergedPostureFromDatabase(startPose, poseGroup, poseName, side=side)
         return self.computePostureGoal(startPose, endPose)
 
 

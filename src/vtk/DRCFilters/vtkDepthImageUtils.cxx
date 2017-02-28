@@ -75,11 +75,6 @@ void vtkDepthImageUtils::DepthBufferToDepthImage(vtkImageData* depthBuffer, vtkI
         depthData[ptr] = std::numeric_limits<float>::quiet_NaN();
         continue;
       }
-      if (z == 0.0)
-      {
-        depthData[ptr] = std::numeric_limits<float>::quiet_NaN();
-        continue;
-      }
 
       Eigen::Vector4f ptToViewport(2*float(x)/imageWidth - 1,
                                   2*float(y)/imageHeight - 1,
@@ -96,13 +91,9 @@ void vtkDepthImageUtils::DepthBufferToDepthImage(vtkImageData* depthBuffer, vtkI
       ptToCamera[2] *= w3;
       ptToCamera[3] = 1.0;
 
-      if (ptToCamera[2] < 0.0001)
-      {
-        depthData[ptr] = std::numeric_limits<float>::quiet_NaN();
-        continue;
-      }
 
       Eigen::Vector4f ptToWorld = cameraToWorld * ptToCamera;
+
       depthData[ptr] = -ptToCamera[2];
 
       //pts->InsertNextPoint(ptToWorld[0], ptToWorld[1], ptToWorld[2]);

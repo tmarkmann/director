@@ -175,6 +175,7 @@ class MyTaskPanel(TaskUserPanel):
 
         TaskUserPanel.__init__(self, windowTitle='Task Panel')
 
+        rt.robotSystem = robotSystem
         iiwaplanning.init(robotSystem)
 
         self.planner = MyPlanner(robotSystem, self.params)
@@ -196,6 +197,7 @@ class MyTaskPanel(TaskUserPanel):
         self.addManualButton('add grasp frames', self.planner.addGraspFrames)
         self.addManualButton('plan pregrasp', self.planner.planPreGrasp)
         self.addManualButton('plan grasp', self.planner.planGrasp)
+        self.addManualButton('plan nominal', self.planner.planToNominal)
         self.addManualSpacer()
         self.addManualButton('open gripper', self.planner.openGripper)
         self.addManualButton('close gripper', self.planner.closeGripper)

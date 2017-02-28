@@ -259,15 +259,15 @@ setGripperJointPositions(robotSystem.playbackRobotModel, 0.04)
 ip = mytaskpanel.iiwaplanning
 
 
-#affordanceName = 'blue funnel'
-#ip.spawnAffordance(affordanceName)
-#ip.addGraspFrames(affordanceName)
+affordanceName = 'box'
+ip.spawnAffordance(affordanceName)
+ip.addGraspFrames(affordanceName)
 #ip.makeBestPlan(affordanceName)
 #addToolBarAction('Random test', ip.randomTest)
 
 
 
-#syncTimer = makeDrakeSimObjectSync('blue_funnel geometry data', 'blue funnel')
-#syncTimer.start()
+syncTimer = makeDrakeSimObjectSync('blue_funnel geometry data', 'blue funnel')
+syncTimer.start()
 
 applogic.resetCamera(viewDirection=[-1,1,-0.5], view=view)

@@ -52,12 +52,8 @@ def makeReachGoal(name='reach goal'):
 
 
 def planNominalPosture():
-
-    #ikPlanner.computePostureGoal(startPose, 'General', 'q_nom')
-
     startPose = robotSystem.planningUtils.getPlanningStartPose()
-    endPose = robotSystem.robotStateJointController.getPose('q_nom')
-    ikPlanner.computePostureGoal(startPose, endPose)
+    ikPlanner.computeDatabasePosturePlan(startPose, 'General', 'q_nom')
 
 
 def getEndEffectorLinkName():
