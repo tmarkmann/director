@@ -54,6 +54,8 @@ def runTest():
     otherJoints = [name for name in robotstate.getDrakePoseJointNames() if name not in jointNames]
     jointSamples = []
 
+    jointLimits[jointLimits==np.inf] = 2*np.pi
+    jointLimits[jointLimits==-np.inf] = -2*np.pi
 
     for name, limit in zip(jointNames, jointLimits):
         jointMin = limit[0] + jointLimitPadding

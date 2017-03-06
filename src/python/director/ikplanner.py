@@ -327,7 +327,7 @@ class IKPlanner(object):
           ('Right Leg', 1e3),
           ('Left Arm', 1),
           ('Right Arm', 1),
-          ('Back', 1e4),
+          ('Back', 1e6),
           ('Neck', 1e6),
           ]
 
@@ -341,9 +341,9 @@ class IKPlanner(object):
 
         costs[jointNames.index('base_x')] = 0
         costs[jointNames.index('base_y')] = 0
-        costs[jointNames.index('base_z')] = 0
-        costs[jointNames.index('base_roll')] = 1e3
-        costs[jointNames.index('base_pitch')] = 1e3
+        costs[jointNames.index('base_z')] = 1e9
+        costs[jointNames.index('base_roll')] = 1e9
+        costs[jointNames.index('base_pitch')] = 1e9
         costs[jointNames.index('base_yaw')] = 0
 
         self.defaultPositionCosts = costs
@@ -520,6 +520,11 @@ class IKPlanner(object):
         return self.createPostureConstraint(startPostureName, joints)
 
 
+    def createXYYawMovingBasePostureConstraint(self, startPostureName):
+        joints = ['base_z', 'base_roll', 'base_pitch']
+        return self.createPostureConstraint(startPostureName, joints)
+
+
     def createMovingBasePostureConstraint(self, startPostureName):
         return self.createXYZMovingBasePostureConstraint(startPostureName)
 
@@ -557,8 +562,13 @@ class IKPlanner(object):
         p = ikconstraints.PostureConstraint()
         p.joints = self.backJoints
 
-        p.jointsLowerBound = [-math.radians(15), -math.radians(5), -np.inf]
-        p.jointsUpperBound = [math.radians(15), math.radians(25), np.inf]
+        p.jointsLowerBound = [-np.inf]*len(p.joints)
+        p.jointsUpperBound = [np.inf]*len(p.joints)
+
+
+        if len(p.joints) == 3:
+            p.jointsLowerBound = [-math.radians(15), -math.radians(5), -np.inf]
+            p.jointsUpperBound = [math.radians(15), math.radians(25), np.inf]
         return p
 
     def createMovingBackLimitedPostureConstraint(self):

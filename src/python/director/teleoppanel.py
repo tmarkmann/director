@@ -437,24 +437,29 @@ class EndEffectorTeleopPanel(object):
         ikPlanner.addPose(startPose, startPoseName)
 
         # Humanoid, i.e. robot has feet and is not a fixed base arm
-        if not ikPlanner.fixedBaseArm and not ikPlanner.robotNoFeet:
+        if not ikPlanner.fixedBaseArm:
             constraints = []
-            constraints.append(ikPlanner.createQuasiStaticConstraint())
             constraints.append(ikPlanner.createLockedNeckPostureConstraint(startPoseName))
 
-            if self.getLFootConstraint() == 'fixed':
-                constraints.append(ikPlanner.createFixedLinkConstraints(startPoseName, ikPlanner.leftFootLink, tspan=[0.0, 1.0], lowerBound=-0.0001*np.ones(3), upperBound=0.0001*np.ones(3), angleToleranceInDegrees=0.1))
-            elif self.getLFootConstraint() == 'constrained':
-                constraints.extend(ikPlanner.createSixDofLinkConstraints(startPoseName, ikPlanner.leftFootLink, tspan=[1.0, 1.0]))
-            elif self.getLFootConstraint() == 'sliding':
-                constraints.extend(ikPlanner.createSlidingFootConstraints(startPoseName)[:2])
+            hasLegs = not ikPlanner.robotNoFeet
 
-            if self.getRFootConstraint() == 'fixed':
-                constraints.append(ikPlanner.createFixedLinkConstraints(startPoseName, ikPlanner.rightFootLink, tspan=[0.0, 1.0], lowerBound=-0.0001*np.ones(3), upperBound=0.0001*np.ones(3), angleToleranceInDegrees=0.1))
-            elif self.getRFootConstraint() == 'constrained':
-                constraints.extend(ikPlanner.createSixDofLinkConstraints(startPoseName, ikPlanner.rightFootLink, tspan=[1.0, 1.0]))
-            elif self.getRFootConstraint() == 'sliding':
-                constraints.extend(ikPlanner.createSlidingFootConstraints(startPoseName)[2:])
+            if hasLegs:
+
+                constraints.append(ikPlanner.createQuasiStaticConstraint())
+
+                if self.getLFootConstraint() == 'fixed':
+                    constraints.append(ikPlanner.createFixedLinkConstraints(startPoseName, ikPlanner.leftFootLink, tspan=[0.0, 1.0], lowerBound=-0.0001*np.ones(3), upperBound=0.0001*np.ones(3), angleToleranceInDegrees=0.1))
+                elif self.getLFootConstraint() == 'constrained':
+                    constraints.extend(ikPlanner.createSixDofLinkConstraints(startPoseName, ikPlanner.leftFootLink, tspan=[1.0, 1.0]))
+                elif self.getLFootConstraint() == 'sliding':
+                    constraints.extend(ikPlanner.createSlidingFootConstraints(startPoseName)[:2])
+
+                if self.getRFootConstraint() == 'fixed':
+                    constraints.append(ikPlanner.createFixedLinkConstraints(startPoseName, ikPlanner.rightFootLink, tspan=[0.0, 1.0], lowerBound=-0.0001*np.ones(3), upperBound=0.0001*np.ones(3), angleToleranceInDegrees=0.1))
+                elif self.getRFootConstraint() == 'constrained':
+                    constraints.extend(ikPlanner.createSixDofLinkConstraints(startPoseName, ikPlanner.rightFootLink, tspan=[1.0, 1.0]))
+                elif self.getRFootConstraint() == 'sliding':
+                    constraints.extend(ikPlanner.createSlidingFootConstraints(startPoseName)[2:])
 
             if self.getBackConstraint() == 'fixed':
                 constraints.append(ikPlanner.createLockedBackPostureConstraint(startPoseName))
@@ -474,18 +479,22 @@ class EndEffectorTeleopPanel(object):
                 ikPlanner.setBaseLocked(False)
             elif self.getBaseConstraint() == 'xyz only':
                 constraints.append(ikPlanner.createXYZMovingBasePostureConstraint(startPoseName))
-                constraints.append(ikPlanner.createKneePostureConstraint(self.kneeJointLimits))
+                if hasLegs: constraints.append(ikPlanner.createKneePostureConstraint(self.kneeJointLimits))
+                ikPlanner.setBaseLocked(False)
+            elif self.getBaseConstraint() == 'xy yaw only':
+                constraints.append(ikPlanner.createXYYawMovingBasePostureConstraint(startPoseName))
+                if hasLegs: constraints.append(ikPlanner.createKneePostureConstraint(self.kneeJointLimits))
                 ikPlanner.setBaseLocked(False)
             elif self.getBaseConstraint() == 'z only':
                 constraints.append(ikPlanner.createZMovingBasePostureConstraint(startPoseName))
-                constraints.append(ikPlanner.createKneePostureConstraint(self.kneeJointLimits))
+                if hasLegs: constraints.append(ikPlanner.createKneePostureConstraint(self.kneeJointLimits))
                 ikPlanner.setBaseLocked(False)
             elif self.getBaseConstraint() == 'limited':
                 constraints.append(ikPlanner.createMovingBaseSafeLimitsConstraint())
-                constraints.append(ikPlanner.createKneePostureConstraint(self.kneeJointLimits))
+                if hasLegs: constraints.append(ikPlanner.createKneePostureConstraint(self.kneeJointLimits))
                 ikPlanner.setBaseLocked(False)
             elif self.getBaseConstraint() == 'free':
-                constraints.append(ikPlanner.createKneePostureConstraint(self.kneeJointLimits))
+                if hasLegs: constraints.append(ikPlanner.createKneePostureConstraint(self.kneeJointLimits))
                 ikPlanner.setBaseLocked(False)
 
         # Fixed Base Arm: Remove all except the fixed base constraint
@@ -493,9 +502,9 @@ class EndEffectorTeleopPanel(object):
             constraints = []
             constraints.append(ikPlanner.createLockedBasePostureConstraint(startPoseName, lockLegs=False))
 
-        if ikPlanner.robotNoFeet:
-            constraints = []
-            constraints.append(ikPlanner.createLockedBasePostureConstraint(startPoseName))
+        #if ikPlanner.robotNoFeet:
+        #    constraints = []
+        #    constraints.append(ikPlanner.createLockedBasePostureConstraint(startPoseName))
 
         # Only add Back constraints if robot has a back
         if ikPlanner.getJointGroup('Back'):
@@ -1043,6 +1052,9 @@ class JointTeleopPanel(object):
 
         self.jointLimitsMin = np.array([self.panel.teleopRobotModel.model.getJointLimits(jointName)[0] for jointName in robotstate.getDrakePoseJointNames()])
         self.jointLimitsMax = np.array([self.panel.teleopRobotModel.model.getJointLimits(jointName)[1] for jointName in robotstate.getDrakePoseJointNames()])
+
+        self.jointLimitsMin[self.jointLimitsMin==-np.inf] = -2*np.pi
+        self.jointLimitsMax[self.jointLimitsMax==np.inf] = 2*np.pi
 
         # this need to be generalized
         if 'baseZJointLimits' in drcargs.getDirectorConfig():
