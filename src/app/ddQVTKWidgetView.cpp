@@ -26,7 +26,8 @@
 #include <vtkCaptionActor2D.h>
 #include <vtkTextProperty.h>
 
-#include <QVTKWidget2.h>
+#include <QVTKOpenGLWidget.h>
+
 #include <QVBoxLayout>
 #include <QTimer>
 
@@ -70,7 +71,7 @@ public:
     this->RenderTimer.setInterval(1000/timerFramesPerSeconds);
   }
 
-  QVTKWidget2* VTKWidget;
+  QVTKOpenGLWidget* VTKWidget;
 
   vtkSmartPointer<vtkRenderer> Renderer;
   vtkSmartPointer<vtkRenderer> RendererBase;
@@ -97,19 +98,28 @@ ddQVTKWidgetView::ddQVTKWidgetView(QWidget* parent) : ddViewBase(parent)
 {
   this->Internal = new ddInternal;
 
+  QSurfaceFormat::setDefaultFormat(QVTKOpenGLWidget::defaultFormat());
+
   QVBoxLayout* layout = new QVBoxLayout(this);
   layout->setMargin(0);
-  this->Internal->VTKWidget = new QVTKWidget2;
+  this->Internal->VTKWidget = new QVTKOpenGLWidget;
+
+
+  //this->Internal->VTKWidget->SetUseTDx(true);
+
+  //this->Internal->RenderWindow = this->Internal->VTKWidget->GetRenderWindow();//vtkSmartPointer<vtkRenderWindow>::New();
+
+  vtkSmartPointer<vtkGenericOpenGLRenderWindow> renderWindow = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
+  this->Internal->RenderWindow = renderWindow;
+
+  this->Internal->VTKWidget->SetRenderWindow(renderWindow);
   layout->addWidget(this->Internal->VTKWidget);
 
-  this->Internal->VTKWidget->SetUseTDx(true);
-
-  this->Internal->RenderWindow = this->Internal->VTKWidget->GetRenderWindow();//vtkSmartPointer<vtkRenderWindow>::New();
-  this->Internal->RenderWindow->SetMultiSamples(8);
-  this->Internal->RenderWindow->StereoCapableWindowOn();
-  this->Internal->RenderWindow->SetStereoTypeToRedBlue();
-  this->Internal->RenderWindow->StereoRenderOff();
-  this->Internal->RenderWindow->StereoUpdate();
+  //this->Internal->RenderWindow->SetMultiSamples(8);
+  //this->Internal->RenderWindow->StereoCapableWindowOn();
+  //this->Internal->RenderWindow->SetStereoTypeToRedBlue();
+  //this->Internal->RenderWindow->StereoRenderOff();
+  //this->Internal->RenderWindow->StereoUpdate();
   //this->Internal->VTKWidget->SetRenderWindow(this->Internal->RenderWindow);
 
   this->Internal->LightKit = vtkSmartPointer<vtkLightKit>::New();
@@ -117,7 +127,7 @@ ddQVTKWidgetView::ddQVTKWidgetView(QWidget* parent) : ddViewBase(parent)
   this->Internal->LightKit->SetFillLightWarmth(0.5);
 
   this->Internal->TDxInteractor = vtkSmartPointer<vtkTDxInteractorStyleCallback>::New();
-  vtkInteractorStyle::SafeDownCast(this->Internal->RenderWindow->GetInteractor()->GetInteractorStyle())->SetTDxStyle(this->Internal->TDxInteractor);
+  //vtkInteractorStyle::SafeDownCast(this->Internal->RenderWindow->GetInteractor()->GetInteractorStyle())->SetTDxStyle(this->Internal->TDxInteractor);
 
   //this->Internal->RenderWindow->SetNumberOfLayers(2);
 
@@ -193,7 +203,7 @@ vtkLightKit* ddQVTKWidgetView::lightKit() const
 }
 
 //-----------------------------------------------------------------------------
-QVTKWidget2* ddQVTKWidgetView::vtkWidget() const
+QVTKOpenGLWidget* ddQVTKWidgetView::vtkWidget() const
 {
   return this->Internal->VTKWidget;
 }
@@ -224,7 +234,7 @@ void ddQVTKWidgetView::onStartRender()
 void ddQVTKWidgetView::onEndRender()
 {
   this->Internal->FPSCounter.update();
-  //printf("end render: %.2f fps\n", this->Internal->FPSCounter.averageFPS());
+  printf("end render: %.2f fps\n", this->Internal->FPSCounter.averageFPS());
 }
 
 //-----------------------------------------------------------------------------

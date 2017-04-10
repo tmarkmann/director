@@ -278,7 +278,8 @@ if(NOT USE_SYSTEM_VTK)
   ExternalProject_Add(vtk
     GIT_REPOSITORY git://vtk.org/VTK.git
 #    GIT_TAG v5.10.1
-    GIT_TAG v7.1.1
+#    GIT_TAG v7.1.1
+    GIT_TAG master
     CMAKE_CACHE_ARGS
       ${default_cmake_args}
       ${python_args}
@@ -286,10 +287,10 @@ if(NOT USE_SYSTEM_VTK)
       -DBUILD_SHARED_LIBS:BOOL=ON
       -DBUILD_TESTING:BOOL=OFF
       -DBUILD_EXAMPLES:BOOL=OFF
-      -DVTK_RENDERING_BACKEND:STRING=OpenGL
+      -DVTK_RENDERING_BACKEND:STRING=OpenGL2
       -DVTK_QT_VERSION:STRING=5
       -DVTK_Group_Qt:BOOL=ON
-
+#      -DModule_vtkGUISupportQtOpenGL:BOOL=ON # needed for QVTKWidget2 and backend is OpenGL2
       -DCMAKE_MACOSX_RPATH:BOOL=ON
 #      -DVTK_USE_GUISUPPORT:BOOL=ON
 #      -DVTK_USE_QT:BOOL=ON

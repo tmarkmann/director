@@ -54,6 +54,8 @@ class ViewEventFilter(object):
 
     def filterEvent(self, obj, event):
 
+        print 'event:', obj, event
+
         if event.type() == QtCore.QEvent.MouseButtonDblClick and event.button() == QtCore.Qt.LeftButton:
             self.onLeftDoubleClick(event)
 

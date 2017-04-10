@@ -90,6 +90,7 @@ set(VTK_LIBRARIES
   vtkRenderingAnnotation
   vtkRenderingFreeType
   vtkRendering${VTK_RENDERING_BACKEND}
+  vtkRenderingGL2PSOpenGL2 # temp
   vtkInteractionStyle
   vtkIOXML
   vtkIOImage
