@@ -1,6 +1,24 @@
-macro(setup_qt4)
-  find_package(Qt4 REQUIRED QtCore QtGui QtOpenGL QtScript)
-  include(${QT_USE_FILE})
+macro(setup_qt)
+
+  if(NOT DEFINED USE_QT_VERSION)
+    set(USE_QT_VERSION 4)
+  endif()
+
+  if(DEFINED Qt5_DIR AND DEFINED QT_QMAKE_EXECUTABLE)
+    message(FATAL_ERROR
+      "This project should not be configured with both Qt5_DIR and QT_QMAKE_EXECUTABLE options.
+  To build with Qt4, specify QT_QMAKE_EXECUTABLE. To build with Qt5, specify  Qt5_DIR.")
+  endif()
+
+  if(USE_QT_VERSION MATCHES 4)
+    find_package(Qt4 REQUIRED QtCore QtGui QtOpenGL QtScript)
+    include(${QT_USE_FILE})
+  elseif(USE_QT_VERSION MATCHES 5)
+    find_package(Qt5 REQUIRED Core Gui Widgets OpenGL)
+  else()
+    message(FATAL_ERROR "USE_QT_VERSION is set to an unexpected value: ${USE_QT_VERSION}")
+  endif()
+
 endmacro()
 
 

@@ -3,9 +3,11 @@
 #include "ddOpenGL.h"
 
 #include <QGLWidget>
+//#include <QOpenGLWidget>
 #include <QVBoxLayout>
 
-
+// TODO For Qt5 use QOpenGLWidget
+//class MyGLWidget : public QOpenGLWidget
 class MyGLWidget : public QGLWidget
 {
 

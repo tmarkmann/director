@@ -1,15 +1,9 @@
-setup_qt4()
-
-if(USE_DRC OR USE_DRAKE)
-  use_cpp11()
-endif()
-
 find_package(PythonLibs 2.7 REQUIRED)
 find_package(PythonInterp 2.7 REQUIRED)
 find_package(PythonQt REQUIRED)
 find_package(CTKPythonConsole REQUIRED)
 find_package(OpenGL REQUIRED)
-find_package(VTK REQUIRED)
+find_package(VTK 7.1 REQUIRED)
 find_package(QtPropertyBrowser REQUIRED)
 
 include(${VTK_USE_FILE})
@@ -20,6 +14,9 @@ include_directories(${QTPROPERTYBROWSER_INCLUDE_DIRS})
 include_directories(${CTK_PYTHONCONSOLE_INCLUDE_DIRS})
 include_directories(${PYTHONQT_INCLUDE_DIRS})
 include_directories(${PYTHON_INCLUDE_DIRS})
+if(USE_QT_VERSION MATCHES 5)
+  include_directories(${Qt5Core_INCLUDE_DIRS})
+endif()
 
 set(decorator_file ${CMAKE_CURRENT_BINARY_DIR}/ddPythonQtDecorators.h)
 
@@ -27,7 +24,33 @@ set(wrap_files
   wrapped_methods.txt
   )
 
-qt4_wrap_cpp(moc_srcs
+
+macro(qt_wrap_ui)
+  if(USE_QT_VERSION MATCHES 4)
+    qt4_wrap_ui(${ARGN})
+  else()
+    qt5_wrap_ui(${ARGN})
+  endif()
+endmacro()
+
+macro(qt_wrap_cpp)
+  if(USE_QT_VERSION MATCHES 4)
+    qt4_wrap_cpp(${ARGN})
+  else()
+    qt5_wrap_cpp(${ARGN})
+  endif()
+endmacro()
+
+macro(qt_add_resources)
+  if(USE_QT_VERSION MATCHES 4)
+    qt4_add_resources(${ARGN})
+  else()
+    qt5_add_resources(${ARGN})
+  endif()
+endmacro()
+
+
+qt_wrap_cpp(moc_srcs
   ${decorator_file}
   ddLumberSelection.h
   ddGLWidgetView.h
@@ -47,13 +70,13 @@ qt4_wrap_cpp(moc_srcs
   ddViewMenu.h
   )
 
-qt4_wrap_ui(ui_srcs
+qt_wrap_ui(ui_srcs
   ddMainWindow.ui
   ddLumberSelection.ui
   ddTaskSelection.ui
   )
 
-qt4_add_resources(resource_srcs
+qt_add_resources(resource_srcs
   uiresources.qrc
   images/resources.qrc
   )
@@ -86,9 +109,24 @@ set(srcs
 
 
 set(VTK_LIBRARIES
-  QVTK
-  vtkPythonCore
+  vtkWrappingPythonCore
+  vtkGUISupportQt
+  vtkGUISupportQtOpenGL
+  vtkInteractionWidgets
+  vtkRenderingAnnotation
+  vtkRenderingFreeType
+  vtkRendering${VTK_RENDERING_BACKEND}
+  vtkInteractionStyle
+  vtkIOXML
+  vtkIOImage
+  vtkIOGeometry
   )
+
+message("QT_LIBRARIES: ${QT_LIBRARIES}")
+message("VTK_LIBRARIES: ${VTK_LIBRARIES}")
+message("VTK_RENDERING_BACKEND: ${VTK_RENDERING_BACKEND}")
+
+#  qt5_use_modules(RenderWindowNoUiFile Core Gui)
 
 set(deps
   ${QT_LIBRARIES}
@@ -111,13 +149,13 @@ if (USE_DRAKE)
   find_package(Drake REQUIRED)
   find_package(Eigen REQUIRED)
 
-  include_directories(
+  include_directories(SYSTEM
     ${EIGEN_INCLUDE_DIRS}
     ${DRAKE_INCLUDE_DIRS}
   )
 
   set(moc_srcs)
-  qt4_wrap_cpp(moc_srcs
+  qt_wrap_cpp(moc_srcs
     ddDrakeModel.h
     ddDrakeWrapper.h
   )
@@ -155,7 +193,7 @@ if (USE_LCM)
   include_directories(${LCM_INCLUDE_DIRS})
 
   set(moc_srcs)
-  qt4_wrap_cpp(moc_srcs
+  qt_wrap_cpp(moc_srcs
     ddLCMSubscriber.h
     ddLCMThread.h
   )
@@ -184,7 +222,7 @@ if (USE_DRC)
   include_directories(${PCL_INCLUDE_DIRS})
 
   set(moc_srcs)
-  qt4_wrap_cpp(moc_srcs
+  qt_wrap_cpp(moc_srcs
     ddBotImageQueue.h
     ddKinectLCM.h
     ddPointCloudLCM.h
