@@ -181,7 +181,7 @@ install(TARGETS ${library_name}
     ARCHIVE DESTINATION ${DD_INSTALL_LIB_DIR})
 
 if(VTK_WRAP_PYTHON)
-  find_package(PythonLibs 2.7 REQUIRED)
+  find_package(PythonLibs 3.5 REQUIRED)
   include_directories(SYSTEM ${PYTHON_INCLUDE_DIR})
   include(${CMAKE_SOURCE_DIR}/cmake/wrap-python.cmake)
   wrap_python(${library_name} "${sources}")

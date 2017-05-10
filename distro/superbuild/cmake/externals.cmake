@@ -63,10 +63,10 @@ if(APPLE)
   # in the users path, this is a fix for homebrew on Mac:
   # https://github.com/Homebrew/homebrew/issues/25118
   execute_process(COMMAND ${PYTHON_CONFIG_EXECUTABLE} --prefix OUTPUT_VARIABLE python_prefix OUTPUT_STRIP_TRAILING_WHITESPACE)
-  set(PYTHON_INCLUDE_DIR ${python_prefix}/include/python2.7)
-  set(PYTHON_LIBRARY ${python_prefix}/lib/libpython2.7${CMAKE_SHARED_LIBRARY_SUFFIX})
+  set(PYTHON_INCLUDE_DIR ${python_prefix}/include/python3.5)
+  set(PYTHON_LIBRARY ${python_prefix}/lib/libpython3.5${CMAKE_SHARED_LIBRARY_SUFFIX})
 else()
-  find_package(PythonLibs 2.7 REQUIRED)
+  find_package(PythonLibs 3.5 REQUIRED)
 endif()
 
 set(python_args
