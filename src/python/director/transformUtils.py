@@ -1,5 +1,5 @@
 from director.thirdparty import transformations
-import vtkAll as vtk
+import director.vtkAll as vtk
 import math
 import numpy as np
 

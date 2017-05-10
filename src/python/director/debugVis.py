@@ -1,6 +1,6 @@
-import vtkAll as vtk
-from vtkNumpy import addNumpyToVtk
-from shallowCopy import shallowCopy
+import director.vtkAll as vtk
+from director.vtkNumpy import addNumpyToVtk
+from director.shallowCopy import shallowCopy
 import numpy as np
 
 class DebugData(object):

@@ -1,6 +1,6 @@
 import os
-import vtkAll as vtk
-from shallowCopy import shallowCopy
+import director.vtkAll as vtk
+from director.shallowCopy import shallowCopy
 import shelve
 import os.path
 
