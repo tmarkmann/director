@@ -26,7 +26,7 @@
 #include <vtkCaptionActor2D.h>
 #include <vtkTextProperty.h>
 
-#include <QVTKWidget2.h>
+#include <QVTKWidget.h>
 #include <QVBoxLayout>
 #include <QTimer>
 
@@ -70,7 +70,7 @@ public:
     this->RenderTimer.setInterval(1000/timerFramesPerSeconds);
   }
 
-  QVTKWidget2* VTKWidget;
+  QVTKWidget* VTKWidget;
 
   vtkSmartPointer<vtkRenderer> Renderer;
   vtkSmartPointer<vtkRenderer> RendererBase;
@@ -99,7 +99,7 @@ ddQVTKWidgetView::ddQVTKWidgetView(QWidget* parent) : ddViewBase(parent)
 
   QVBoxLayout* layout = new QVBoxLayout(this);
   layout->setMargin(0);
-  this->Internal->VTKWidget = new QVTKWidget2;
+  this->Internal->VTKWidget = new QVTKWidget;
   layout->addWidget(this->Internal->VTKWidget);
 
   this->Internal->VTKWidget->SetUseTDx(true);
@@ -193,7 +193,7 @@ vtkLightKit* ddQVTKWidgetView::lightKit() const
 }
 
 //-----------------------------------------------------------------------------
-QVTKWidget2* ddQVTKWidgetView::vtkWidget() const
+QVTKWidget* ddQVTKWidgetView::vtkWidget() const
 {
   return this->Internal->VTKWidget;
 }
