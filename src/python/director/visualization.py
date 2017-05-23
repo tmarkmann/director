@@ -810,7 +810,7 @@ def showGrid(view, cellSize=0.5, numberOfCells=25, name='grid', parent='sensors'
             return
 
         actors = view.renderer().GetActors()
-        actors = [actors.GetItemAsObject(i) for i in xrange(actors.GetNumberOfItems())]
+        actors = [actors.GetItemAsObject(i) for i in range(actors.GetNumberOfItems())]
         onlyGridShowing = (len(actors) > 0)
         for actor in actors:
             if actor != gridObj.actor and actor.GetVisibility():
