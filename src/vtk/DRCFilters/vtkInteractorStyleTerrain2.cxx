@@ -26,8 +26,24 @@
 #include "vtkRenderWindowInteractor.h"
 #include "vtkRenderer.h"
 #include "vtkSphereSource.h"
+#include "vtkVector.h"
+
+
+#include "vtkSmartPointer.h"
+#include "vtkTransform.h"
 
 vtkStandardNewMacro(vtkInteractorStyleTerrain2);
+
+const vtkVector3d operator-(const vtkVector3d &lhs, const vtkVector3d &rhs)
+{
+  return vtkVector3d(lhs[0] - rhs[0], lhs[1] - rhs[1], lhs[2] - rhs[2]);
+}
+
+const vtkVector3d operator+(const vtkVector3d &lhs, const vtkVector3d &rhs)
+{
+  return vtkVector3d(lhs[0] + rhs[0], lhs[1] + rhs[1], lhs[2] + rhs[2]);
+}
+
 
 //----------------------------------------------------------------------------
 vtkInteractorStyleTerrain2::vtkInteractorStyleTerrain2()
@@ -40,6 +56,10 @@ vtkInteractorStyleTerrain2::vtkInteractorStyleTerrain2()
   this->LatLongActor = NULL;
 
   this->MotionFactor   = 10.0;
+
+  this->CustomCenterOfRotation[0] = 0.0;
+  this->CustomCenterOfRotation[1] = 0.0;
+  this->CustomCenterOfRotation[2] = 0.0;
 }
 
 //----------------------------------------------------------------------------
@@ -64,6 +84,50 @@ vtkInteractorStyleTerrain2::~vtkInteractorStyleTerrain2()
     {
     this->LatLongExtractEdges->Delete();
     }
+}
+
+//----------------------------------------------------------------------------
+double vtkInteractorStyleTerrain2::ComputeScale(const double position[3], vtkRenderer *renderer)
+{
+  // Find the cursor scale factor such that 1 data unit length
+  // equals 1 screen pixel at the cursor's distance from the camera.
+  // Start by computing the height of the window at the cursor position.
+  double worldHeight = 1.0;
+  vtkCamera *camera = renderer->GetActiveCamera();
+  if (camera->GetParallelProjection())
+    {
+    worldHeight = 2*camera->GetParallelScale();
+    }
+  else
+    {
+    vtkMatrix4x4 *matrix = camera->GetViewTransformMatrix();
+    // Get a 3x3 matrix with the camera orientation
+    double cvz[3];
+    cvz[0] = matrix->GetElement(2, 0);
+    cvz[1] = matrix->GetElement(2, 1);
+    cvz[2] = matrix->GetElement(2, 2);
+
+    double cameraPosition[3];
+    camera->GetPosition(cameraPosition);
+
+    double v[3];
+    v[0] = cameraPosition[0] - position[0];
+    v[1] = cameraPosition[1] - position[1];
+    v[2] = cameraPosition[2] - position[2];
+
+    worldHeight = 2*(vtkMath::Dot(v,cvz)
+                     * tan(0.5*camera->GetViewAngle()/57.296));
+    }
+
+  // Compare world height to window height.
+  int windowHeight = renderer->GetSize()[1];
+  double scale = 1.0;
+  if (windowHeight > 0)
+    {
+    scale = worldHeight/windowHeight;
+    }
+
+  return scale;
 }
 
 //----------------------------------------------------------------------------
@@ -206,6 +270,7 @@ void vtkInteractorStyleTerrain2::Rotate()
     return;
     }
 
+
   vtkRenderWindowInteractor *rwi = this->Interactor;
 
   int dx = - ( rwi->GetEventPosition()[0] - rwi->GetLastEventPosition()[0] );
@@ -232,6 +297,64 @@ void vtkInteractorStyleTerrain2::Rotate()
   // Make sure that we don't hit the north pole singularity.
 
   vtkCamera *camera = this->CurrentRenderer->GetActiveCamera();
+
+
+  double dop[3], vup[3];
+
+  camera->GetDirectionOfProjection( dop );
+  vtkMath::Normalize( dop );
+  camera->GetViewUp( vup );
+  vtkMath::Normalize( vup );
+
+  double angle = vtkMath::DegreesFromRadians( acos(vtkMath::Dot( dop, vup) ) );
+  //printf("current angle: %.2f.  elvation delta: %.2f\n", angle, e);
+
+  if ( ( angle + e ) > 177.0 ||
+       ( angle + e ) < 3.0 )
+    {
+    //printf("  ...clamping elvation delta.\n");
+    e = 0.0;
+    }
+
+
+  // Camera Parameters ///////////////////////////////////////////////////
+  double *focalPoint = camera->GetFocalPoint();
+  double *viewUp = camera->GetViewUp();
+  double *position = camera->GetPosition();
+  double axis[3];
+  axis[0] = -camera->GetViewTransformMatrix()->GetElement(0,0);
+  axis[1] = -camera->GetViewTransformMatrix()->GetElement(0,1);
+  axis[2] = -camera->GetViewTransformMatrix()->GetElement(0,2);
+
+  // Build The transformatio /////////////////////////////////////////////////
+  vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
+  transform->Identity();
+
+  transform->Translate(this->CustomCenterOfRotation[0], this->CustomCenterOfRotation[1], this->CustomCenterOfRotation[2]);
+  transform->RotateWXYZ(a, viewUp); // Azimuth
+  transform->RotateWXYZ(e, axis);   // Elevation
+  transform->Translate(-this->CustomCenterOfRotation[0], -this->CustomCenterOfRotation[1], -this->CustomCenterOfRotation[2]);
+
+  double newPosition[3];
+  transform->TransformPoint(position,newPosition); // Transform Position
+  double newFocalPoint[3];
+  transform->TransformPoint(focalPoint, newFocalPoint); // Transform Focal Point
+
+  camera->SetPosition(newPosition);
+  camera->SetFocalPoint(newFocalPoint);
+
+
+  /*
+  printf("using custom cor: %f %f %f\n", this->CustomCenterOfRotation[0], this->CustomCenterOfRotation[1], this->CustomCenterOfRotation[2]);
+
+  vtkVector3d focal(camera->GetFocalPoint());
+  vtkVector3d pos(camera->GetPosition());
+
+  vtkVector3d trans = vtkVector3d(this->CustomCenterOfRotation) - focal;
+
+  camera->SetFocalPoint(vtkVector3d(focal + trans).GetData());
+  //camera->SetPosition(vtkVector3d(pos + trans).GetData());
+
   camera->Azimuth( a );
 
   double dop[3], vup[3];
@@ -253,12 +376,67 @@ void vtkInteractorStyleTerrain2::Rotate()
 
   camera->Elevation( e );
 
+
+  camera->SetFocalPoint(vtkVector3d(vtkVector3d(camera->GetFocalPoint()) - trans).GetData());
+  //camera->SetPosition(vtkVector3d(vtkVector3d(camera->GetPosition()) - trans).GetData());
+
+  */
+
+
   if ( this->AutoAdjustCameraClippingRange )
     {
     this->CurrentRenderer->ResetCameraClippingRange();
     }
 
   rwi->Render();
+}
+
+namespace {
+void GetRightVandUpV(double *p, vtkCamera *cam, vtkRenderWindow* window,
+                                               double *rightV, double *upV)
+{
+  int i;
+
+  // Compute the horizontal & vertical scaling ('scalex' and 'scaley')
+  // factors as function of the down point & camera params.
+  double from[3];
+  cam->GetPosition(from);
+
+  // construct a vector from the viewing position to the picked point
+  double vec[3];
+  for(i=0; i<3; i++)
+    {
+    vec[i] = p[i] - from[i];
+    }
+
+  // Get shortest distance 'l' between the viewing position and
+  // plane parallel to the projection plane that contains the 'DownPt'.
+  double atV[4];
+  cam->GetViewPlaneNormal(atV);
+  vtkMath::Normalize(atV);
+  double l = -vtkMath::Dot(vec, atV);
+
+  double view_angle = cam->GetViewAngle() * vtkMath::Pi() / 180.0;
+  double w = window->GetSize()[0];
+  double h = window->GetSize()[1];
+  double scalex = w/h*((2*l*tan(view_angle/2))/2);
+  double scaley =     ((2*l*tan(view_angle/2))/2);
+
+  // construct the camera offset vector as function of delta mouse X & Y.
+  cam->GetViewUp(upV);
+  vtkMath::Cross(upV, atV, rightV);
+  vtkMath::Cross(atV, rightV, upV); // (make sure 'upV' is orthogonal
+                                    //  to 'atV' & 'rightV')
+  vtkMath::Normalize(rightV);
+  vtkMath::Normalize(upV);
+
+  for(i=0; i<3; i++)
+    {
+    rightV[i] = rightV[i] * scalex;
+    upV   [i] = upV   [i] * scaley;
+    }
+}
+
 }
 
 //----------------------------------------------------------------------------
@@ -273,9 +451,35 @@ void vtkInteractorStyleTerrain2::Pan()
 
   // Get the vector of motion
 
-  double fp[3], focalPoint[3], pos[3], v[3], p1[4], p2[4];
+  //double fp[3], focalPoint[3], pos[3], v[3], p1[4], p2[4];
 
   vtkCamera *camera = this->CurrentRenderer->GetActiveCamera();
+
+
+  double w = rwi->GetRenderWindow()->GetSize()[0];
+  double h = rwi->GetRenderWindow()->GetSize()[1];
+
+  int dx = rwi->GetEventPosition()[0] - rwi->GetLastEventPosition()[0];
+  int dy = rwi->GetEventPosition()[1] - rwi->GetLastEventPosition()[1];
+
+  double dxf = 2.0 * dx / w;
+  double dyf = 2.0 * dy / h;
+
+
+  double rightV[3], upV[3];
+  GetRightVandUpV(this->CustomCenterOfRotation, camera, rwi->GetRenderWindow(),
+                        rightV, upV);
+
+  double offset[3];
+  for(int i=0; i<3; i++)
+    {
+    offset[i] = (-dxf * rightV[i] +
+                 -dyf * upV   [i]);
+    }
+
+
+
+/*
   camera->GetPosition( pos );
   camera->GetFocalPoint( fp );
 
@@ -317,6 +521,30 @@ void vtkInteractorStyleTerrain2::Pan()
 
   camera->SetPosition( pos );
   camera->SetFocalPoint( fp );
+*/
+
+  double p[3], f[3];
+  camera->GetPosition  (p);
+  camera->GetFocalPoint(f);
+
+  double newP[3], newF[3];
+  for(int i=0;i<3;i++)
+    {
+    newP[i] = p[i] + offset[i];
+    newF[i] = f[i] + offset[i];
+    }
+
+  camera->SetPosition(newP);
+  camera->SetFocalPoint(newF);
+
+
+
+    //camera->Dolly( zoomFactor );
+    if (this->AutoAdjustCameraClippingRange)
+      {
+      this->CurrentRenderer->ResetCameraClippingRange();
+      }
+
 
   if (rwi->GetLightFollowCamera()) 
     {
@@ -336,23 +564,63 @@ void vtkInteractorStyleTerrain2::Dolly()
 
   vtkRenderWindowInteractor *rwi = this->Interactor;
   vtkCamera *camera = this->CurrentRenderer->GetActiveCamera();
-  double *center = this->CurrentRenderer->GetCenter();
+ // double *center = this->CurrentRenderer->GetCenter();
 
   int dy = rwi->GetEventPosition()[1] - rwi->GetLastEventPosition()[1];
-  double dyf = this->MotionFactor * dy / center[1];
-  double zoomFactor = pow(1.1, dyf);
-  
+//  double dyf = this->MotionFactor * dy / center[1];
+//  double zoomFactor = pow(1.1, dyf);
+
+
+  double h = rwi->GetRenderWindow()->GetSize()[1];
+
+  double dyf = 2.0 * dy / h;
+
+
   if (camera->GetParallelProjection())
     {
-    camera->SetParallelScale(camera->GetParallelScale() / zoomFactor);
+    //camera->SetParallelScale(camera->GetParallelScale() / zoomFactor);
     }
   else
     {
-    camera->Dolly( zoomFactor );
+
+
+  double from[3];
+  camera->GetPosition(from);
+
+  double movec[3];
+  for(int i=0; i<3; i++)
+    {
+    movec[i] = this->CustomCenterOfRotation[i] - from[i];
+    }
+
+  double offset[3];
+  for(int i=0; i<3; i++)
+    {
+    offset[i] = movec[i] * dyf;
+    }
+
+  double p[3], f[3];
+  camera->GetPosition  (p);
+  camera->GetFocalPoint(f);
+
+  double newP[3], newF[3];
+  for(int i=0;i<3;i++)
+    {
+    newP[i] = p[i] + offset[i];
+    newF[i] = f[i] + offset[i];
+    }
+
+  camera->SetPosition(newP);
+  camera->SetFocalPoint(newF);
+
+
+
+    //camera->Dolly( zoomFactor );
     if (this->AutoAdjustCameraClippingRange)
       {
       this->CurrentRenderer->ResetCameraClippingRange();
       }
+
     }
 
   if (rwi->GetLightFollowCamera()) 

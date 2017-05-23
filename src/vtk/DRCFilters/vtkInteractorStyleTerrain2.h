@@ -91,6 +91,11 @@ public:
   vtkGetMacro(LatLongLines,int);
   vtkBooleanMacro(LatLongLines,int);
 
+  vtkSetVector3Macro(CustomCenterOfRotation, double);
+  vtkGetVector3Macro(CustomCenterOfRotation, double);
+
+  double ComputeScale(const double position[3], vtkRenderer *renderer);
+
 protected:
   vtkInteractorStyleTerrain2();
   ~vtkInteractorStyleTerrain2();
@@ -107,6 +112,8 @@ protected:
   void CreateLatLong();
   
   double MotionFactor;
+
+  double CustomCenterOfRotation[3];
 
 private:
   vtkInteractorStyleTerrain2(const vtkInteractorStyleTerrain2&);  // Not implemented.
