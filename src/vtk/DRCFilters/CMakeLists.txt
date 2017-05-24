@@ -14,6 +14,7 @@ set(sources
   vtkFrameWidget.cxx
   vtkFrameWidgetRepresentation.cxx
   vtkInteractorStyleTerrain2.cxx
+  vtkPickCenteredInteractorStyle.cxx
   #vtkDepthImageProcessingPass.cxx
   #vtkEDLShading.cxx
   #vtkOBJImporter.cxx
