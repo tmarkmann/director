@@ -92,7 +92,17 @@ public:
 
 
 //-----------------------------------------------------------------------------
+ddQVTKWidgetView::ddQVTKWidgetView(bool disable_anti_alias, QWidget* parent) : ddViewBase(parent)
+{
+  init(disable_anti_alias);
+}
+
 ddQVTKWidgetView::ddQVTKWidgetView(QWidget* parent) : ddViewBase(parent)
+{
+  init(false);
+}
+
+void ddQVTKWidgetView::init(bool disable_anti_alias)
 {
   this->Internal = new ddInternal;
 
@@ -104,7 +114,10 @@ ddQVTKWidgetView::ddQVTKWidgetView(QWidget* parent) : ddViewBase(parent)
   this->Internal->VTKWidget->SetUseTDx(true);
 
   this->Internal->RenderWindow = vtkSmartPointer<vtkRenderWindow>::New();
-  this->Internal->RenderWindow->SetMultiSamples(0);
+  if (disable_anti_alias)
+    this->Internal->RenderWindow->SetMultiSamples(0);
+  else
+    this->Internal->RenderWindow->SetMultiSamples(8);
   this->Internal->RenderWindow->StereoCapableWindowOn();
   this->Internal->RenderWindow->SetStereoTypeToRedBlue();
   this->Internal->RenderWindow->StereoRenderOff();
@@ -127,9 +140,6 @@ ddQVTKWidgetView::ddQVTKWidgetView(QWidget* parent) : ddViewBase(parent)
   //this->Internal->Renderer->SetLayer(1);
   this->Internal->RenderWindow->AddRenderer(this->Internal->Renderer);
 
-
-
-
   vtkMapper::SetResolveCoincidentTopologyToPolygonOffset();
 
   this->Internal->Renderer->GradientBackgroundOn();
@@ -145,7 +155,7 @@ ddQVTKWidgetView::ddQVTKWidgetView(QWidget* parent) : ddViewBase(parent)
 
   this->connect(&this->Internal->RenderTimer, SIGNAL(timeout()), SLOT(onRenderTimer()));
   this->Internal->RenderTimer.start();
-  this->setLightKitEnabled(true);
+  this->setLightKitEnabled(true); 
 }
 
 //-----------------------------------------------------------------------------
