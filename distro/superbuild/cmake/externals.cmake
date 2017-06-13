@@ -405,7 +405,7 @@ if(USE_KINECT)
 
   ExternalProject_Add(openni2-camera-lcm
     GIT_REPOSITORY https://github.com/openhumanoids/openni2-camera-lcm
-    GIT_TAG 6b1fe91
+    GIT_TAG 7645947087aabc427006d96367ae17285127d473
     CMAKE_CACHE_ARGS
       ${default_cmake_args}
       -DINSTALL_BOT_SPY:BOOL=OFF
