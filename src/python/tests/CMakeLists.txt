@@ -11,13 +11,16 @@ set(python_tests_core
   testDepthScanner.py
   testFrameSync.py
   testHeatMap.py
+  testImageView.py
   testMainWindowApp.py
   testObjectModel.py
   testPackagePath.py
   testPropertiesPanel.py
+  testPointSelector.py
   testPythonConsole.py
   testTaskQueue.py
   testTransformations.py
+  testUndoRedo.py
 )
 
 set(python_tests_lcm
@@ -40,7 +43,7 @@ set(python_tests_robot_extra
   testCameraView.py
   testContinuousWalking.py
   testDrawRobotLog.py
-  testImageView.py
+  testImageViewApp.py
   testOtdfParser.py
   testPlanConstraints.py
   testPlaneSegmentation.py
