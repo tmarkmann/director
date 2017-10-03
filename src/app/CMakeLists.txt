@@ -30,6 +30,7 @@ include_directories(${CTK_PYTHONCONSOLE_INCLUDE_DIRS})
 include_directories(${PYTHONQT_INCLUDE_DIRS})
 include_directories(${PYTHON_INCLUDE_DIRS})
 
+
 set(decorator_file ${CMAKE_CURRENT_BINARY_DIR}/ddPythonQtDecorators.h)
 
 # Configure whether to use the QVTKWidget or the QVTKOpenGLWidget
@@ -208,7 +209,7 @@ if (USE_LCM)
 
 endif()
 
-if (USE_DRC)
+if (TRUE)
 
   find_package(LibBot REQUIRED MODULE)
   include_directories(${LIBBOT_INCLUDE_DIRS})
@@ -216,17 +217,29 @@ if (USE_DRC)
   find_package(PCL REQUIRED)
   include_directories(${PCL_INCLUDE_DIRS})
 
+  find_package(OpenCV REQUIRED)
+  include_directories(${OpenCV_INCLUDE_DIRS})
+
+  find_package(ZLIB REQUIRED)
+
+  find_library(CVUTILS_LIBRARY cv-utils DOC "The cv-utils library")
+  find_path(CVUTILS_INCLUDE_DIR image_utils/jpeg.h PATH_SUFFIXES cv-utils DOC "Path to the cv-utils include directory")
+
+  set(CVUTILS_INCLUDE_DIRS ${CVUTILS_INCLUDE_DIR})
+  set(CVUTILS_LIBRARIES ${CVUTILS_LIBRARY})
+  include_directories(${CVUTILS_INCLUDE_DIRS})
+
   set(moc_srcs)
   qt_wrap_cpp(moc_srcs
     ddBotImageQueue.h
-    ddKinectLCM.h
+    #ddKinectLCM.h
     ddPointCloudLCM.h
   )
 
   list(APPEND srcs
     ${moc_srcs}
     ddBotImageQueue.cpp
-    ddKinectLCM.cpp
+    #ddKinectLCM.cpp
     ddPointCloudLCM.cpp
   )
 
@@ -237,10 +250,14 @@ if (USE_DRC)
   list (APPEND deps
     ${LIBBOT_LIBRARIES}
     ${PCL_LIBRARIES}
+    ${OpenCV_LIBS}
+    ${CVUTILS_LIBRARIES}
+    ${ZLIB_LIBRARIES}
   )
 
   list(APPEND pkg_deps
-    image-utils multisense_utils kinect-utils lcmtypes_kinect lcmtypes_bot2-core
+    #image-utils multisense_utils kinect-utils lcmtypes_kinect lcmtypes_bot2-core
+    lcmtypes_bot2-core
   )
 
 endif()
