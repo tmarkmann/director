@@ -18,7 +18,7 @@ class DD_APP_EXPORT ddQVTKWidgetView : public ddViewBase
 
 public:
 
-  ddQVTKWidgetView(QWidget* parent=0);
+  ddQVTKWidgetView(QWidget* parent=0,bool disableAntiAlias);
   virtual ~ddQVTKWidgetView();
 
   vtkRenderWindow* renderWindow() const;

@@ -92,7 +92,7 @@ public:
 
 
 //-----------------------------------------------------------------------------
-ddQVTKWidgetView::ddQVTKWidgetView(QWidget* parent) : ddViewBase(parent)
+ddQVTKWidgetView::ddQVTKWidgetView(QWidget* parent, bool disableAntiAlias=false ) : ddViewBase(parent)
 {
   this->Internal = new ddInternal;
 
@@ -104,7 +104,11 @@ ddQVTKWidgetView::ddQVTKWidgetView(QWidget* parent) : ddViewBase(parent)
   this->Internal->VTKWidget->SetUseTDx(true);
 
   this->Internal->RenderWindow = vtkSmartPointer<vtkRenderWindow>::New();
-  this->Internal->RenderWindow->SetMultiSamples(8);
+  if( disableAntiAlias ){
+    this->Internal->RenderWindow->SetMultiSamples(0);
+  }else{
+    this->Internal->RenderWindow->SetMultiSamples(8);
+  }
   this->Internal->RenderWindow->StereoCapableWindowOn();
   this->Internal->RenderWindow->SetStereoTypeToRedBlue();
   this->Internal->RenderWindow->StereoRenderOff();
