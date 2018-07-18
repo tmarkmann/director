@@ -92,7 +92,7 @@ public:
 
 
 //-----------------------------------------------------------------------------
-ddQVTKWidgetView::ddQVTKWidgetView(QWidget* parent, bool disableAntiAlias=false ) : ddViewBase(parent)
+ddQVTKWidgetView::ddQVTKWidgetView(QWidget* parent, bool disableAntiAlias ) : ddViewBase(parent)
 {
   this->Internal = new ddInternal;
 
