@@ -18,7 +18,6 @@ class MainWindowApp(object):
 
         self.mainWindow = QtGui.QMainWindow()
         self.mainWindow.resize(768 * (16/9.0), 768)
-
         self.settings = QtCore.QSettings()
 
         self.fileMenu = self.mainWindow.menuBar().addMenu('&File')
@@ -123,8 +122,8 @@ class MainWindowApp(object):
 
         return action
 
-    def registerStartupCallback(self, func):
-        consoleapp.ConsoleApp._startupCallbacks.append(func)
+    def registerStartupCallback(self, func, priority=1):
+        consoleapp.ConsoleApp._startupCallbacks.setdefault(priority, []).append(func)
 
     def _restoreWindowState(self, key):
         appsettings.restoreState(self.settings, self.mainWindow, key)
@@ -163,7 +162,7 @@ class MainWindowAppFactory(object):
             'Grid': ['View', 'ObjectModel'],
             'MainWindow' : ['View', 'ObjectModel'],
             'AdjustedClippingRange' : ['View'],
-            'ScriptLoader' : ['MainWindow', 'GlobalModules']}
+            'ScriptLoader' : ['MainWindow', 'Globals']}
 
         disabledComponents = []
 
@@ -322,13 +321,22 @@ class MainWindowAppFactory(object):
             for scriptArgs in fields.commandLineArgs.scripts:
                 filename = scriptArgs[0]
                 globalsDict = fields.globalsDict
-                prevFile = globalsDict.get('__file__')
-                globalsDict['__file__'] = filename
-                globalsDict['_argv'] = scriptArgs
+                args = dict(__file__=filename,
+                            _argv=scriptArgs,
+                            _fields=fields)
+                prev_args = {}
+                for k, v in args.items():
+                    if k in globalsDict:
+                        prev_args[k] = globalsDict[k]
+                    globalsDict[k] = v
                 try:
-                    execfile(filename, fields.globalsDict)
+                    execfile(filename, globalsDict)
                 finally:
-                    globalsDict['__file__'] = prevFile
+                    for k in args.keys():
+                        del globalsDict[k]
+                    for k, v in prev_args.items():
+                        globalsDict[k] = v
+
         fields.app.registerStartupCallback(loadScripts)
 
 
@@ -343,6 +351,7 @@ class MainWindowPanelFactory(object):
             'CameraControlPanel' : ['MainWindow'],
             'MeasurementPanel' : ['MainWindow'],
             'OutputConsole' : ['MainWindow'],
+            'UndoRedo' : ['MainWindow'],
             'DrakeVisualizer' : ['MainWindow'],
             'TreeViewer' : ['MainWindow'],
             'LCMGLRenderer' : ['MainWindow']}
@@ -418,6 +427,30 @@ class MainWindowPanelFactory(object):
           cameraControlPanel=cameraControlPanel,
           cameraControlDock=cameraControlDock
           )
+
+    def initUndoRedo(self, fields):
+
+      undoStack = QtGui.QUndoStack()
+      undoView = QtGui.QUndoView(undoStack)
+      undoView.setEmptyLabel('Start')
+      undoView.setWindowTitle('History')
+      undoDock = fields.app.addWidgetToDock(undoView, QtCore.Qt.LeftDockWidgetArea, visible=False)
+
+      undoAction = undoStack.createUndoAction(undoStack)
+      redoAction = undoStack.createRedoAction(undoStack)
+      undoAction.setShortcut(QtGui.QKeySequence('Ctrl+Z'))
+      redoAction.setShortcut(QtGui.QKeySequence('Ctrl+Shift+Z'))
+
+      fields.app.editMenu.addAction(undoAction)
+      fields.app.editMenu.addAction(redoAction)
+
+      return FieldContainer(
+        undoDock=undoDock,
+        undoStack=undoStack,
+        undoView=undoView,
+        undoAction=undoAction,
+        redoAction=redoAction
+        )
 
     def initDrakeVisualizer(self, fields):
 

@@ -29,11 +29,11 @@ ddBotImageQueue::~ddBotImageQueue()
 //-----------------------------------------------------------------------------
 bool ddBotImageQueue::initCameraData(const QString& cameraName, CameraData* cameraData)
 {
-  cameraData->mName = cameraName.toAscii().data();
+  cameraData->mName = cameraName.toLocal8Bit().data();
   cameraData->mHasCalibration = true;
   cameraData->mImageMessage.utime = 0;
 
-  cameraData->mCamTrans = bot_param_get_new_camtrans(mBotParam, cameraName.toAscii().data());
+  cameraData->mCamTrans = bot_param_get_new_camtrans(mBotParam, cameraName.toLocal8Bit().data());
   if (!cameraData->mCamTrans)
   {
     printf("Failed to get BotCamTrans for camera: %s\n", qPrintable(cameraName));
@@ -42,7 +42,7 @@ bool ddBotImageQueue::initCameraData(const QString& cameraName, CameraData* came
 
   QString key = QString("cameras.") + cameraName + QString(".coord_frame");
   char* val = NULL;
-  if (bot_param_get_str(mBotParam, key.toAscii().data(), &val) == 0)
+  if (bot_param_get_str(mBotParam, key.toLocal8Bit().data(), &val) == 0)
   {
     cameraData->mCoordFrame = val;
     free(val);
@@ -59,7 +59,7 @@ bool ddBotImageQueue::initCameraData(const QString& cameraName, CameraData* came
 void ddBotImageQueue::init(ddLCMThread* lcmThread,
                            const QString& botConfigFile) {
   if (botConfigFile.length()) {
-    mBotParam = bot_param_new_from_file(botConfigFile.toAscii().data());
+    mBotParam = bot_param_new_from_file(botConfigFile.toLocal8Bit().data());
   } else {
     while (!mBotParam) {
       mBotParam = bot_param_new_from_server(
@@ -166,7 +166,7 @@ int ddBotImageQueue::getTransform(const QString& fromFrame, const QString& toFra
     }
 
   double matx[16];
-  int status = bot_frames_get_trans_mat_4x4_with_utime(mBotFrames, fromFrame.toAscii().data(),  toFrame.toAscii().data(), utime, matx);
+  int status = bot_frames_get_trans_mat_4x4_with_utime(mBotFrames, fromFrame.toLocal8Bit().data(),  toFrame.toLocal8Bit().data(), utime, matx);
   if (!status)
     {
     return 0;
@@ -194,7 +194,7 @@ int ddBotImageQueue::getTransform(const QString& fromFrame, const QString& toFra
     }
 
   double matx[16];
-  int status = bot_frames_get_trans_mat_4x4(mBotFrames, fromFrame.toAscii().data(),  toFrame.toAscii().data(), matx);
+  int status = bot_frames_get_trans_mat_4x4(mBotFrames, fromFrame.toLocal8Bit().data(),  toFrame.toLocal8Bit().data(), matx);
   if (!status)
     {
     return 0;
@@ -548,14 +548,8 @@ vtkSmartPointer<vtkImageData> ddBotImageQueue::toVtkImage(CameraData* cameraData
   }
 
   vtkSmartPointer<vtkImageData> image = vtkSmartPointer<vtkImageData>::New();
-
-  image->SetWholeExtent(0, w-1, 0, h-1, 0, 0);
-  image->SetSpacing(1.0, 1.0, 1.0);
-  image->SetOrigin(0.0, 0.0, 0.0);
-  image->SetExtent(image->GetWholeExtent());
-  image->SetNumberOfScalarComponents(nComponents);
-  image->SetScalarType(componentType);
-  image->AllocateScalars();
+  image->SetDimensions(w, h, 1);
+  image->AllocateScalars(componentType, nComponents);
 
   unsigned char* outPtr = static_cast<unsigned char*>(image->GetScalarPointer(0, 0, 0));
 
@@ -609,7 +603,7 @@ vtkSmartPointer<vtkPolyData> PolyDataFromPointCloud(pcl::PointCloud<pcl::PointXY
     float point[3] = {cloud->points[i].x, cloud->points[i].y, cloud->points[i].z};
     unsigned char color[3] = {cloud->points[i].r, cloud->points[i].g, cloud->points[i].b};
     points->SetPoint(j, point);
-    rgbArray->SetTupleValue(j, color);
+    rgbArray->SetTypedTuple(j, color);
     j++;
   }
   nr_points = j;
@@ -725,7 +719,7 @@ void ddBotImageQueue::getPointCloudFromImages(const QString& channel, vtkPolyDat
   CameraData* cameraData = this->getCameraData(channel_left);
   QString key = QString("coordinate_frames.") + channel + QString("_RIGHT.initial_transform.translation");
   double baseline = 0.07; // an approximate value for multisense
-  if (!bot_param_get_double(mBotParam, key.toAscii().data(), &baseline) == 0){
+  if (!bot_param_get_double(mBotParam, key.toLocal8Bit().data(), &baseline) == 0){
     printf("MULTISENSE_CAMERA_RIGHT baseline not found\n");
     return;
   }

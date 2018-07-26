@@ -2,6 +2,7 @@ import director.objectmodel as om
 import director.applogic as app
 from shallowCopy import shallowCopy
 import director.vtkAll as vtk
+from director import filterUtils
 from director import transformUtils
 from director import callbacks
 from director import frameupdater
@@ -32,7 +33,7 @@ class PolyDataItem(om.ObjectModelItem):
         self.views = []
         self.polyData = polyData
         self.mapper = vtk.vtkPolyDataMapper()
-        self.mapper.SetInput(self.polyData)
+        self.mapper.SetInputData(self.polyData)
         self.actor = vtk.vtkActor()
         self.actor.SetMapper(self.mapper)
         self.shadowActor = None
@@ -73,7 +74,7 @@ class PolyDataItem(om.ObjectModelItem):
     def setPolyData(self, polyData):
 
         self.polyData = polyData
-        self.mapper.SetInput(polyData)
+        self.mapper.SetInputData(polyData)
 
         self._updateSurfaceProperty()
         self._updateColorByProperty()
@@ -433,7 +434,7 @@ def showText(text, name, fontSize=18, position=(10, 10), parent=None, view=None)
     return item
 
 
-def createAxesPolyData(scale, useTube):
+def createAxesPolyData(scale, useTube, tubeWidth=0.002):
     axes = vtk.vtkAxes()
     axes.SetComputeNormals(0)
     axes.SetScaleFactor(scale)
@@ -441,8 +442,8 @@ def createAxesPolyData(scale, useTube):
 
     if useTube:
         tube = vtk.vtkTubeFilter()
-        tube.SetInput(axes.GetOutput())
-        tube.SetRadius(0.002)
+        tube.SetInputConnection(axes.GetOutputPort())
+        tube.SetRadius(tubeWidth)
         tube.SetNumberOfSides(12)
         tube.Update()
         axes = tube
@@ -473,6 +474,7 @@ class FrameItem(PolyDataItem):
         self.addProperty('Edit', False)
         self.addProperty('Trace', False)
         self.addProperty('Tube', False)
+        self.addProperty('Tube Width', 0.002, attributes=om.PropertyAttributes(decimals=3, minimum=0.001, maximum=10, singleStep=0.01, hidden=True))
 
         self.properties.setPropertyIndex('Edit', 0)
         self.properties.setPropertyIndex('Trace', 1)
@@ -520,7 +522,7 @@ class FrameItem(PolyDataItem):
     def _updateAxesGeometry(self):
         scale = self.getProperty('Scale')
         self.rep.SetWorldSize(scale)
-        self.setPolyData(createAxesPolyData(scale, self.getProperty('Tube')))
+        self.setPolyData(createAxesPolyData(scale, self.getProperty('Tube'), self.getProperty('Tube Width')))
 
     def _onPropertyChanged(self, propertySet, propertyName):
         PolyDataItem._onPropertyChanged(self, propertySet, propertyName)
@@ -547,6 +549,7 @@ class FrameItem(PolyDataItem):
                 om.removeFromObjectModel(self.traceData.getTraceData())
                 self.traceData = None
         elif propertyName == 'Tube':
+            self.properties.setPropertyAttribute('Tube Width', 'hidden', not self.getProperty(propertyName))
             self._updateAxesGeometry()
 
     def onRemoveFromObjectModel(self):
@@ -567,7 +570,6 @@ class FrameTraceVisualizer(object):
         self.frame = frame
         self.traceName = '%s trace' % frame.getProperty('Name')
         self.lastPosition = np.array(frame.transform.GetPosition())
-        self.lineCell = vtk.vtkLine()
         frame.connectFrameModified(self.onFrameModified)
 
     def getTraceData(self):
@@ -575,31 +577,32 @@ class FrameTraceVisualizer(object):
         if not t:
             pts = vtk.vtkPoints()
             pts.SetDataTypeToDouble()
-            pts.InsertNextPoint(self.frame.transform.GetPosition())
+            pts.InsertNextPoint(self.lastPosition)
             pd = vtk.vtkPolyData()
+            pd.Allocate(1, 1)
             pd.SetPoints(pts)
-            pd.SetLines(vtk.vtkCellArray())
+            polyline = vtk.vtkPolyLine()
+            pd.InsertNextCell(polyline.GetCellType(), polyline.GetPointIds())
+            idArray = pd.GetLines().GetData()
+            idArray.InsertNextValue(0)
             t = showPolyData(pd, self.traceName, parent=self.frame)
         return t
 
     def addPoint(self, point):
         traceData = self.getTraceData()
         pd = traceData.polyData
-
         pd.GetPoints().InsertNextPoint(point)
         numberOfPoints = pd.GetNumberOfPoints()
-        line = self.lineCell
-        ids = line.GetPointIds()
-        ids.SetId(0, numberOfPoints-2)
-        ids.SetId(1, numberOfPoints-1)
-        pd.GetLines().InsertNextCell(line.GetPointIds())
-
+        idArray = pd.GetLines().GetData()
+        idArray.InsertNextValue(numberOfPoints-1)
+        idArray.SetValue(0, numberOfPoints)
         pd.Modified()
         traceData._renderAllViews()
 
     def onFrameModified(self, frame):
         position = np.array(frame.transform.GetPosition())
         if not np.allclose(position, self.lastPosition):
+            self.lastPosition = position
             self.addPoint(position)
 
 
@@ -786,7 +789,30 @@ class ViewOptionsItem(om.ObjectModelItem):
         self.view.render()
 
 
-def showGrid(view, cellSize=0.5, numberOfCells=25, name='grid', parent='sensors', color=[1,1,1], alpha=0.05, gridTransform=None):
+def getVisibleActors(view):
+    actors = view.renderer().GetActors()
+    return [actors.GetItemAsObject(i) for i in range(actors.GetNumberOfItems())
+                if actors.GetItemAsObject(i).GetVisibility()]
+
+
+def computeViewBoundsNoGrid(view, gridObj):
+    gridObj.actor.SetUseBounds(False)
+    bounds = view.renderer().ComputeVisiblePropBounds()
+    gridObj.actor.SetUseBounds(True)
+    return bounds
+
+
+def computeViewBoundsSoloGrid(view, gridObj):
+    actors = getVisibleActors(view)
+    onlyGridShowing = (len(actors) == 1) and (actors[0] == gridObj.actor)
+    if onlyGridShowing:
+        gridObj.actor.SetUseBounds(True)
+        return view.renderer().ComputeVisiblePropBounds()
+    else:
+        return computeViewBoundsNoGrid(view, gridObj)
+
+
+def showGrid(view, cellSize=0.5, numberOfCells=25, name='grid', parent='sensors', color=[1,1,1], alpha=0.05, gridTransform=None, viewBoundsFunction=None):
 
     grid = vtk.vtkGridSource()
     grid.SetScale(cellSize)
@@ -805,19 +831,17 @@ def showGrid(view, cellSize=0.5, numberOfCells=25, name='grid', parent='sensors'
 
     gridObj.setProperty('Surface Mode', 'Wireframe')
 
-    def computeViewBoundsNoGrid():
-        if not gridObj.getProperty('Visible'):
+    viewBoundsFunction = viewBoundsFunction or computeViewBoundsNoGrid
+    def onViewBoundsRequest():
+        if view not in gridObj.views or not gridObj.getProperty('Visible'):
             return
-
-        gridObj.actor.SetUseBounds(False)
-        bounds = view.renderer().ComputeVisiblePropBounds()
-        gridObj.actor.SetUseBounds(True)
+        bounds = viewBoundsFunction(view, gridObj)
         if vtk.vtkMath.AreBoundsInitialized(bounds):
             view.addCustomBounds(bounds)
         else:
             view.addCustomBounds([-1, 1, -1, 1, -1, 1])
+    view.connect('computeBoundsRequest(ddQVTKWidgetView*)', onViewBoundsRequest)
 
-    view.connect('computeBoundsRequest(ddQVTKWidgetView*)', computeViewBoundsNoGrid)
     return gridObj
 
 
@@ -914,13 +938,14 @@ def addChildFrame(obj, initialTransform=None):
     '''
 
     if obj.getChildFrame():
-        return
+        return obj.getChildFrame()
 
     if initialTransform:
-        pd = transformPolyData(obj.polyData, initialTransform.GetLinearInverse())
+        pd = filterUtils.transformPolyData(obj.polyData, initialTransform.GetLinearInverse())
         obj.setPolyData(pd)
-
-    t = obj.actor.GetUserTransform()
+        t = initialTransform
+    else:
+        t = obj.actor.GetUserTransform()
 
     if t is None:
         t = vtk.vtkTransform()

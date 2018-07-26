@@ -8,9 +8,12 @@ set(python_tests_core
   testAffordancePanel.py
   testCameraControl.py
   testConsoleApp.py
+  testDebugVis.py
   testDepthScanner.py
   testFrameSync.py
+  testFrameTrace.py
   testHeatMap.py
+  testImageView.py
   testMainWindowApp.py
   testObjectModel.py
   testPackagePath.py
@@ -18,7 +21,9 @@ set(python_tests_core
   testPointSelector.py
   testPythonConsole.py
   testTaskQueue.py
+  testTaskRunner.py
   testTransformations.py
+  testUndoRedo.py
 )
 
 set(python_tests_lcm
@@ -41,7 +46,7 @@ set(python_tests_robot_extra
   testCameraView.py
   testContinuousWalking.py
   testDrawRobotLog.py
-  testImageView.py
+  testImageViewApp.py
   testOtdfParser.py
   testPlanConstraints.py
   testPlaneSegmentation.py

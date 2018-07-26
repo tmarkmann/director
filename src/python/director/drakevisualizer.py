@@ -24,6 +24,14 @@ import bot_core as lcmbot
 #import robotlocomotion as lcmrl
 lcmrl = lcmbot
 
+# pydrake is only used to provide an additional source of mesh package lookup
+# paths, so failing to find it should not be fatal
+try:
+    import pydrake
+    HAVE_PYDRAKE = True
+except ImportError:
+    HAVE_PYDRAKE = False
+
 from PythonQt import QtGui
 
 class Geometry(object):
@@ -169,7 +177,7 @@ class Geometry(object):
             return
 
         texture = vtk.vtkTexture()
-        texture.SetInput(image)
+        texture.SetInputData(image)
         texture.EdgeClampOn()
         texture.RepeatOn()
 
@@ -182,9 +190,9 @@ class Geometry(object):
             return filename
 
         if Geometry.PackageMap is None:
-            import pydrake
             m = packagepath.PackageMap()
-            m.populateFromSearchPaths([pydrake.getDrakePath()])
+            if HAVE_PYDRAKE:
+                m.populateFromSearchPaths([pydrake.getDrakePath()])
             m.populateFromEnvironment(['DRAKE_PACKAGE_PATH', 'ROS_PACKAGE_PATH'])
             Geometry.PackageMap = m
 
@@ -216,7 +224,7 @@ class Geometry(object):
             polyDataList = ioUtils.readMultiBlock(filename)
         else:
             if filename.endswith('obj'):
-                polyDataList, actors = ioUtils.readObjMtl(geom.string_data)
+                polyDataList, actors = ioUtils.readObjMtl(filename)
                 if actors:
                     visInfo = Geometry.makeVisInfoFromActors(actors)
             else:
