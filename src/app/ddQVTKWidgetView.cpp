@@ -116,8 +116,6 @@ ddQVTKWidgetView::ddQVTKWidgetView(QWidget* parent, bool disableAntiAlias ) : dd
   this->Internal->VTKWidget->SetRenderWindow(this->Internal->RenderWindow);
 #endif
   this->Internal->VTKWidget->SetRenderWindow(this->Internal->RenderWindow);
-<<<<<<< HEAD
-=======
 
   if (antiAliasingEnabled){
     this->Internal->RenderWindow->SetMultiSamples(8);
@@ -125,7 +123,6 @@ ddQVTKWidgetView::ddQVTKWidgetView(QWidget* parent, bool disableAntiAlias ) : dd
     this->Internal->RenderWindow->SetMultiSamples(0);
   }
 
->>>>>>> RobotLocomotion/master
   this->Internal->RenderWindow->StereoCapableWindowOn();
   this->Internal->RenderWindow->SetStereoTypeToRedBlue();
   this->Internal->RenderWindow->StereoRenderOff();
