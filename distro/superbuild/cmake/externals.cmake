@@ -267,7 +267,7 @@ option(USE_SYSTEM_VTK "Use system version of VTK.  If off, VTK will be built." $
 
 if(NOT USE_SYSTEM_VTK)
   ExternalProject_Add(vtk
-    GIT_REPOSITORY git://vtk.org/VTK.git
+    GIT_REPOSITORY https://gitlab.kitware.com/vtk/vtk.git
     GIT_TAG v5.10.1
     CMAKE_CACHE_ARGS
       ${default_cmake_args}
