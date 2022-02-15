@@ -294,8 +294,8 @@ else()
 
   # Verifies that the system has VTK5.
   find_package(VTK REQUIRED HINTS ${vtk_homebrew_dir})
-  if (NOT ${VTK_VERSION_MAJOR} EQUAL 6)
-    message(FATAL_ERROR "System does not have VTK6. It has version ${VTK_VERSION}.")
+  if (NOT ${VTK_VERSION_MAJOR} EQUAL 7)
+    message(FATAL_ERROR "System does not have VTK7. It has version ${VTK_VERSION}.")
   endif()
 endif()
 
